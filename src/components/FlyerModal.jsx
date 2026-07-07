@@ -22,7 +22,7 @@ const FlyerModal = ({ isOpen, onClose }) => {
   const flyerRef = useRef(null);
 
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonthIdx, setSelectedMonthIdx] = useState(new Date().getMonth() === 0 ? 11 : new Date().getMonth() - 1);
+  const [selectedMonths, setSelectedMonths] = useState([new Date().getMonth() === 0 ? 11 : new Date().getMonth() - 1]);
   const [selectedItems, setSelectedItems] = useState(DEFAULT_FLYER_ITEMS);
   const [isConfiguring, setIsConfiguring] = useState(true);
 
@@ -49,11 +49,11 @@ const FlyerModal = ({ isOpen, onClose }) => {
     let currentSum = 0;
     let prevSum = 0;
 
-    // Soma do início do ano até o mês selecionado (inclusive)
-    for (let i = 0; i <= selectedMonthIdx; i++) {
+    // Soma apenas os meses selecionados
+    selectedMonths.forEach(i => {
       currentSum += (yearData[item][i] || 0);
       prevSum += (prevYearData[item][i] || 0);
-    }
+    });
 
     if (prevSum === 0) return currentSum > 0 ? 100 : 0;
     return ((currentSum - prevSum) / prevSum) * 100;
@@ -72,7 +72,8 @@ const FlyerModal = ({ isOpen, onClose }) => {
       const image = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.href = image;
-      link.download = `Flyer_CGD_${selectedYear}_Ate_${MONTHS[selectedMonthIdx]}.png`;
+      const monthsStr = selectedMonths.map(i => MONTHS[i]).join('_');
+      link.download = `Flyer_CGD_${selectedYear}_Meses_${monthsStr}.png`;
       link.click();
     } catch (err) {
       console.error("Erro ao gerar imagem", err);
@@ -125,16 +126,26 @@ const FlyerModal = ({ isOpen, onClose }) => {
                 </select>
               </div>
               <div style={{ flex: 1, minWidth: '200px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Período (Jan até...)</label>
-                <select
-                  value={selectedMonthIdx}
-                  onChange={(e) => setSelectedMonthIdx(Number(e.target.value))}
-                  style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', background: 'var(--surface-color)', border: '1px solid var(--surface-border)', color: 'var(--text-main)' }}
-                >
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Período (Meses)</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.5rem', maxHeight: '150px', overflowY: 'auto', padding: '0.8rem', background: 'var(--surface-color)', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
                   {MONTHS.map((m, idx) => (
-                    <option key={idx} value={idx}>Até {m}</option>
+                    <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.8rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedMonths.includes(idx)}
+                        onChange={() => {
+                          if (selectedMonths.includes(idx)) {
+                            setSelectedMonths(prev => prev.filter(i => i !== idx));
+                          } else {
+                            setSelectedMonths(prev => [...prev, idx].sort((a, b) => a - b));
+                          }
+                        }}
+                        style={{ accentColor: 'var(--primary-color)', width: '16px', height: '16px' }}
+                      />
+                      {m}
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
             </div>
 
@@ -168,13 +179,18 @@ const FlyerModal = ({ isOpen, onClose }) => {
         {/* PRÉ-VISUALIZAÇÃO DO FLYER */}
         {!isConfiguring && (
           <div className="flyer-preview-panel animate-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
               <button onClick={() => setIsConfiguring(true)} className="btn-secondary">
                 <Settings size={16} /> Ajustar Dados
               </button>
-              <button onClick={handleDownload} className="btn-primary">
-                <Download size={16} /> Baixar Imagem
-              </button>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button onClick={onClose} className="btn-secondary">
+                  <X size={16} /> Fechar Flyer
+                </button>
+                <button onClick={handleDownload} className="btn-primary">
+                  <Download size={16} /> Baixar Imagem
+                </button>
+              </div>
             </div>
 
             {/* FLYER CONTAINER */}
@@ -213,7 +229,9 @@ const FlyerModal = ({ isOpen, onClose }) => {
                   <div style={{ color: 'white', fontSize: '45px', margin: 0, letterSpacing: '4px', textShadow: '4px 4px 10px rgba(0,0,0,0.8)', fontWeight: 'bold' }}>BATALHÃO LESTE</div>
                   <div style={{ padding: '15px 30px', display: 'inline-block', border: '4px solid #333', marginTop: '15px' }}>
                     <div style={{ color: 'white', fontSize: '30px', margin: 0, letterSpacing: '2px', fontWeight: 'bold' }}>ANÁLISE CGD {selectedYear}</div>
-                    <div style={{ color: 'white', fontSize: '30px', margin: 0, fontWeight: 'normal', fontFamily: 'Arial, sans-serif' }}>COMPARATIVO JAN A {MONTHS[selectedMonthIdx]}</div>
+                    <div style={{ color: 'white', fontSize: '24px', margin: 0, fontWeight: 'normal', fontFamily: 'Arial, sans-serif' }}>
+                      COMPARATIVO: {selectedMonths.map(i => MONTHS[i]).join(', ')}
+                    </div>
                   </div>
                 </div>
 
