@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, LabelList } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, LabelList, Legend } from 'recharts';
 import {
   Shield, Target, AlertTriangle, CheckCircle, Calendar,
   Skull, HandCoins, Car, Bus, Store, Zap, Package,
   ShieldAlert, UserMinus, CarFront, FlaskConical, Layers, Lock, Ghost, Search,
-  TrendingUp, TrendingDown, Minus, Layers as LayersIcon, Image as ImageIcon
+  TrendingUp, TrendingDown, Minus, Layers as LayersIcon, Image as ImageIcon,
+  ShieldCheck, ArrowUpRight, ArrowDownRight, Scale
 } from 'lucide-react';
 import FlyerModal from '../components/FlyerModal';
 import ZoneIndicators from '../components/ZoneIndicators';
@@ -81,6 +82,59 @@ const KPICard = ({ title, value, variation, icon: Icon, color, isInverse = false
   );
 };
 
+const ComparativeTooltip = ({ active, payload, label, prevYearKey, currYearKey, isInverse = false }) => {
+  if (active && payload && payload.length) {
+    const prevItem = payload.find(p => p.dataKey === prevYearKey);
+    const currItem = payload.find(p => p.dataKey === currYearKey);
+    const prevVal = Number(prevItem?.value || 0);
+    const currVal = Number(currItem?.value || 0);
+    const diff = currVal - prevVal;
+    const pct = prevVal > 0 ? ((currVal - prevVal) / prevVal) * 100 : (currVal > 0 ? 100 : 0);
+    const isGood = isInverse ? diff <= 0 : diff >= 0;
+
+    return (
+      <div style={{
+        background: 'rgba(15, 23, 42, 0.95)',
+        border: '1px solid rgba(255, 255, 255, 0.15)',
+        backdropFilter: 'blur(12px)',
+        padding: '12px 16px',
+        borderRadius: '12px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+        color: '#f8fafc',
+        fontSize: '0.8rem',
+        minWidth: '220px'
+      }}>
+        <div style={{ fontWeight: '800', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '6px', fontSize: '0.85rem' }}>
+          {label}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+          <span style={{ color: '#94a3b8' }}>{prevYearKey}:</span>
+          <span style={{ fontWeight: '700' }}>{typeof prevVal === 'number' ? prevVal.toLocaleString('pt-BR') : prevVal}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <span style={{ color: isInverse ? '#f87171' : '#34d399' }}>{currYearKey}:</span>
+          <span style={{ fontWeight: '800', color: isInverse ? '#f87171' : '#34d399' }}>{typeof currVal === 'number' ? currVal.toLocaleString('pt-BR') : currVal}</span>
+        </div>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingTop: '6px',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          fontWeight: '800',
+          color: isGood ? '#10b981' : '#ef4444'
+        }}>
+          <span>Variação:</span>
+          <span>
+            {diff > 0 ? `+${diff.toLocaleString('pt-BR')}` : diff.toLocaleString('pt-BR')} ({pct > 0 ? '+' : ''}{pct.toFixed(1)}%)
+          </span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 const Dashboard = () => {
   const { statsData, prodData, MONTHS, YEARS, selectedYear, setSelectedYear, STATS_ITEMS, PROD_ITEMS, calculateTotal, calculateTotalVariation } = useData();
   const [showFlyer, setShowFlyer] = useState(false);
@@ -154,69 +208,41 @@ const Dashboard = () => {
     });
   }
 
-  const KPICard = ({ title, value, variation, icon: Icon, color, isInverse = false, varLabel = "" }) => {
-    const isIncrease = variation > 0;
-    const isDecrease = variation < 0;
+  // Anos para comparação direta entre períodos
+  const currYear = isAllYears ? YEARS[YEARS.length - 1] : Number(selectedYear);
+  const prevYear = isAllYears 
+    ? YEARS[YEARS.length - 2] 
+    : (currYear > YEARS[0] ? currYear - 1 : currYear);
+  const prevYearKey = `Ano ${prevYear}`;
+  const currYearKey = `Ano ${currYear}`;
 
-    let varColor = 'var(--text-muted)';
-    if (isIncrease) varColor = isInverse ? '#ef4444' : '#10b981';
-    if (isDecrease) varColor = isInverse ? '#10b981' : '#ef4444';
+  const statsComparativeData = STATS_ITEMS.map(item => {
+    const valPrev = getYearTotal('stats', prevYear, item);
+    const valCurr = getYearTotal('stats', currYear, item);
+    const diff = valCurr - valPrev;
+    const pct = valPrev > 0 ? ((valCurr - valPrev) / valPrev) * 100 : (valCurr > 0 ? 100 : 0);
+    return {
+      name: item,
+      [prevYearKey]: valPrev,
+      [currYearKey]: valCurr,
+      diff,
+      pct
+    };
+  });
 
-    return (
-      <div className="glass-card" style={{
-        padding: '1rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.8rem',
-        border: '1px solid var(--surface-border)',
-        width: '100%'
-      }}>
-        <div className="kpi-icon-container" style={{
-          padding: '8px',
-          background: `${color}20`,
-          borderRadius: '10px',
-          color: color,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <Icon size={20} />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{
-            color: 'var(--text-muted)',
-            fontSize: '0.65rem',
-            marginBottom: '2px',
-            textTransform: 'uppercase',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
-          }}>{title}</p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '700', margin: 0 }}>{value % 1 === 0 ? value : value.toFixed(2)}</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '1px',
-                fontSize: '0.65rem',
-                fontWeight: '700',
-                color: varColor,
-                background: `${varColor}10`,
-                padding: '1px 4px',
-                borderRadius: '4px'
-              }}>
-                {isIncrease && <TrendingUp size={10} />}
-                {isDecrease && <TrendingDown size={10} />}
-                {Math.abs(variation).toFixed(1)}%
-                {varLabel && <span style={{ marginLeft: '4px', fontSize: '0.55rem', fontWeight: 'normal', color: 'var(--text-muted)' }}>{varLabel}</span>}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  const prodComparativeData = PROD_ITEMS.map(item => {
+    const valPrev = getYearTotal('prod', prevYear, item);
+    const valCurr = getYearTotal('prod', currYear, item);
+    const diff = valCurr - valPrev;
+    const pct = valPrev > 0 ? ((valCurr - valPrev) / valPrev) * 100 : (valCurr > 0 ? 100 : 0);
+    return {
+      name: item,
+      [prevYearKey]: valPrev,
+      [currYearKey]: valCurr,
+      diff,
+      pct
+    };
+  });
 
 
   const statsIcons = {
@@ -291,66 +317,38 @@ const Dashboard = () => {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginTop: '2rem' }}>
-        <div className="glass-panel" style={{ padding: '1rem' }}>
-          <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Tendência de Crimes</h3>
-          <div style={{ height: '250px', width: '100%' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-border)" />
-                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={10} />
-                <YAxis stroke="var(--text-muted)" fontSize={10} />
-                <Tooltip contentStyle={{ background: 'var(--surface-color)', border: '1px solid var(--surface-border)', borderRadius: '8px', fontSize: '0.8rem' }} />
-                <Line type="monotone" dataKey="ROUBO" stroke="var(--primary-color)" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="FURTO" stroke="var(--accent-color)" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="HOMICÍDIO DOLOSO" stroke="#ef4444" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+      {/* GRÁFICO 1: COMPARATIVO DOS ÍNDICES CRIMINAIS */}
+      <div className="glass-panel" style={{ padding: '1.5rem', marginTop: '2rem', borderRadius: '16px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.2rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertTriangle size={20} color="#ef4444" />
+              <h3 style={{ fontSize: '1.15rem', fontWeight: '800', margin: 0 }}>
+                Comparativo dos Índices Criminais ({prevYear} vs {currYear})
+              </h3>
+            </div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '4px 0 0 0' }}>
+              Comparativo direto de ocorrências criminais entre os anos {prevYear} e {currYear}
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.75rem', fontWeight: '700' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#94a3b8', display: 'inline-block' }}></span>
+              <span style={{ color: 'var(--text-muted)' }}>Ano {prevYear}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#ef4444', display: 'inline-block' }}></span>
+              <span style={{ color: '#ef4444' }}>Ano {currYear}</span>
+            </div>
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '1rem' }}>
-          <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Produtividade por Categoria</h3>
-          <div style={{ height: '250px', width: '100%' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={PROD_ITEMS.map(item => ({
-                name: item.split(' ')[0],
-                value: currentDisplayProd[item],
-                fullName: item
-              }))} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-border)" vertical={false} />
-                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={8} interval={0} />
-                <YAxis stroke="var(--text-muted)" fontSize={10} />
-                <Tooltip
-                  contentStyle={{ background: 'var(--surface-color)', border: '1px solid var(--surface-border)', borderRadius: '8px', fontSize: '0.8rem' }}
-                  formatter={(value) => [typeof value === 'number' ? value.toFixed(2).replace(/\.00$/, '') : value]}
-                />
-                <Bar dataKey="value" fill="var(--secondary-color)" radius={[4, 4, 0, 0]}>
-                  {PROD_ITEMS.map((entry, index) => <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'var(--primary-color)' : 'var(--accent-color)'} />)}
-                  <LabelList
-                    dataKey="value"
-                    position="top"
-                    fill="var(--text-muted)"
-                    fontSize={10}
-                    formatter={(val) => typeof val === 'number' ? val.toFixed(2).replace(/\.00$/, '') : val}
-                  />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      <div className="glass-panel" style={{ padding: '1rem', marginTop: '1.5rem' }}>
-        <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Criminalidade por Categoria (Detalhado)</h3>
-        <div style={{ height: '350px', width: '100%' }}>
+        <div style={{ height: '360px', width: '100%' }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={STATS_ITEMS.map(item => ({
-                name: item,
-                value: currentDisplayStats[item]
-              }))}
-              margin={{ top: 25, right: 20, left: 0, bottom: 60 }}
+              data={statsComparativeData}
+              margin={{ top: 25, right: 20, left: 0, bottom: 65 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-border)" vertical={false} />
               <XAxis
@@ -358,17 +356,92 @@ const Dashboard = () => {
                 stroke="var(--text-muted)"
                 fontSize={9}
                 interval={0}
-                angle={-45}
+                angle={-35}
                 textAnchor="end"
-                height={60}
+                height={65}
               />
               <YAxis stroke="var(--text-muted)" fontSize={10} />
               <Tooltip
-                contentStyle={{ background: 'var(--surface-color)', border: '1px solid var(--surface-border)', borderRadius: '8px', fontSize: '0.8rem' }}
+                content={<ComparativeTooltip prevYearKey={prevYearKey} currYearKey={currYearKey} isInverse={true} />}
               />
-              <Bar dataKey="value" fill="#ef4444" radius={[4, 4, 0, 0]}>
-                {STATS_ITEMS.map((entry, index) => <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#ef4444' : '#f87171'} />)}
-                <LabelList dataKey="value" position="top" fill="var(--text-muted)" fontSize={10} />
+              <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '0.8rem', paddingBottom: '10px' }} />
+              <Bar dataKey={prevYearKey} fill="#94a3b8" radius={[4, 4, 0, 0]}>
+                <LabelList dataKey={prevYearKey} position="top" fill="var(--text-muted)" fontSize={9} />
+              </Bar>
+              <Bar dataKey={currYearKey} fill="#ef4444" radius={[4, 4, 0, 0]}>
+                <LabelList dataKey={currYearKey} position="top" fill="#ef4444" fontSize={9} fontWeight="bold" />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* GRÁFICO 2: COMPARATIVO DA PRODUTIVIDADE */}
+      <div className="glass-panel" style={{ padding: '1.5rem', marginTop: '1.5rem', borderRadius: '16px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.2rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ShieldCheck size={20} color="#10b981" />
+              <h3 style={{ fontSize: '1.15rem', fontWeight: '800', margin: 0 }}>
+                Comparativo de Produtividade Policial ({prevYear} vs {currYear})
+              </h3>
+            </div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '4px 0 0 0' }}>
+              Apreensões de armas, entorpecentes, veículos recuperados e prisões realizadas
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.75rem', fontWeight: '700' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#94a3b8', display: 'inline-block' }}></span>
+              <span style={{ color: 'var(--text-muted)' }}>Ano {prevYear}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#10b981', display: 'inline-block' }}></span>
+              <span style={{ color: '#10b981' }}>Ano {currYear}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ height: '340px', width: '100%' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={prodComparativeData}
+              margin={{ top: 25, right: 20, left: 0, bottom: 45 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-border)" vertical={false} />
+              <XAxis
+                dataKey="name"
+                stroke="var(--text-muted)"
+                fontSize={9}
+                interval={0}
+                angle={-20}
+                textAnchor="end"
+                height={50}
+              />
+              <YAxis stroke="var(--text-muted)" fontSize={10} />
+              <Tooltip
+                content={<ComparativeTooltip prevYearKey={prevYearKey} currYearKey={currYearKey} isInverse={false} />}
+              />
+              <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '0.8rem', paddingBottom: '10px' }} />
+              <Bar dataKey={prevYearKey} fill="#94a3b8" radius={[4, 4, 0, 0]}>
+                <LabelList
+                  dataKey={prevYearKey}
+                  position="top"
+                  fill="var(--text-muted)"
+                  fontSize={9}
+                  formatter={(val) => typeof val === 'number' ? val.toFixed(2).replace(/\.00$/, '') : val}
+                />
+              </Bar>
+              <Bar dataKey={currYearKey} fill="#10b981" radius={[4, 4, 0, 0]}>
+                <LabelList
+                  dataKey={currYearKey}
+                  position="top"
+                  fill="#10b981"
+                  fontSize={9}
+                  fontWeight="bold"
+                  formatter={(val) => typeof val === 'number' ? val.toFixed(2).replace(/\.00$/, '') : val}
+                />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
