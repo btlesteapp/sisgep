@@ -6,7 +6,7 @@ import {
   Skull, HandCoins, Car, Bus, Store, Zap, Package,
   ShieldAlert, UserMinus, CarFront, FlaskConical, Layers, Lock, Ghost, Search,
   TrendingUp, TrendingDown, Minus, Layers as LayersIcon, Image as ImageIcon,
-  ShieldCheck, ArrowUpRight, ArrowDownRight, Scale
+  ShieldCheck, ArrowUpRight, ArrowDownRight, Scale, Check
 } from 'lucide-react';
 import FlyerModal from '../components/FlyerModal';
 import ZoneIndicators from '../components/ZoneIndicators';
@@ -135,6 +135,171 @@ const ComparativeTooltip = ({ active, payload, label, prevYearKey, currYearKey, 
   return null;
 };
 
+const MonthFilterBar = ({
+  months,
+  selectedMonths,
+  onChange,
+  activeColor = 'var(--primary-color)',
+  title = "Filtrar por Mês"
+}) => {
+  const isAll = selectedMonths.length === 12;
+  const isJanSet = selectedMonths.length === 9 && selectedMonths.every((m, idx) => m === idx);
+  const isSem1 = selectedMonths.length === 6 && selectedMonths.every((m, idx) => m === idx);
+  const isSem2 = selectedMonths.length === 6 && selectedMonths.every((m, idx) => m === idx + 6);
+
+  const toggleMonth = (idx) => {
+    if (selectedMonths.includes(idx)) {
+      if (selectedMonths.length === 1) return; // manter pelo menos 1 mês selecionado
+      onChange(selectedMonths.filter(m => m !== idx));
+    } else {
+      onChange([...selectedMonths, idx].sort((a, b) => a - b));
+    }
+  };
+
+  const getPeriodLabel = () => {
+    if (isAll) return 'Ano Inteiro (Jan a Dez)';
+    if (isJanSet) return 'Jan a Set (9 Meses)';
+    if (isSem1) return '1º Semestre (Jan a Jun)';
+    if (isSem2) return '2º Semestre (Jul a Dez)';
+    if (selectedMonths.length === 1) return months[selectedMonths[0]];
+    return `${selectedMonths.length} meses (${selectedMonths.map(i => months[i]).join(', ')})`;
+  };
+
+  return (
+    <div style={{
+      background: 'rgba(255, 255, 255, 0.02)',
+      border: '1px solid var(--surface-border)',
+      borderRadius: '12px',
+      padding: '10px 14px',
+      marginBottom: '1.2rem',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px'
+    }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Calendar size={14} color={activeColor} />
+          <span style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--text-color)', textTransform: 'uppercase' }}>
+            {title}:
+          </span>
+          <span style={{
+            fontSize: '0.68rem',
+            fontWeight: '700',
+            color: activeColor,
+            background: `${activeColor}18`,
+            padding: '2px 8px',
+            borderRadius: '6px'
+          }}>
+            {getPeriodLabel()}
+          </span>
+        </div>
+
+        {/* Atalhos Rápidos */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => onChange([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])}
+            style={{
+              padding: '3px 8px',
+              borderRadius: '5px',
+              fontSize: '0.65rem',
+              fontWeight: '700',
+              border: '1px solid var(--surface-border)',
+              background: isAll ? activeColor : 'transparent',
+              color: isAll ? '#fff' : 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            Todos
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange([0, 1, 2, 3, 4, 5, 6, 7, 8])}
+            style={{
+              padding: '3px 8px',
+              borderRadius: '5px',
+              fontSize: '0.65rem',
+              fontWeight: '700',
+              border: '1px solid var(--surface-border)',
+              background: isJanSet ? activeColor : 'transparent',
+              color: isJanSet ? '#fff' : 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            Jan a Set
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange([0, 1, 2, 3, 4, 5])}
+            style={{
+              padding: '3px 8px',
+              borderRadius: '5px',
+              fontSize: '0.65rem',
+              fontWeight: '700',
+              border: '1px solid var(--surface-border)',
+              background: isSem1 ? activeColor : 'transparent',
+              color: isSem1 ? '#fff' : 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            1º Sem
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange([6, 7, 8, 9, 10, 11])}
+            style={{
+              padding: '3px 8px',
+              borderRadius: '5px',
+              fontSize: '0.65rem',
+              fontWeight: '700',
+              border: '1px solid var(--surface-border)',
+              background: isSem2 ? activeColor : 'transparent',
+              color: isSem2 ? '#fff' : 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            2º Sem
+          </button>
+        </div>
+      </div>
+
+      {/* Pílulas de Cada Mês (Seleção Múltipla) */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+        {months.map((m, idx) => {
+          const isSelected = selectedMonths.includes(idx);
+          return (
+            <button
+              key={m}
+              type="button"
+              onClick={() => toggleMonth(idx)}
+              style={{
+                flex: '1 0 calc(8.33% - 4px)',
+                minWidth: '40px',
+                padding: '6px 4px',
+                borderRadius: '6px',
+                fontSize: '0.7rem',
+                fontWeight: isSelected ? '800' : '600',
+                border: isSelected ? `1px solid ${activeColor}` : '1px solid var(--surface-border)',
+                background: isSelected ? activeColor : 'rgba(255, 255, 255, 0.02)',
+                color: isSelected ? '#ffffff' : 'var(--text-muted)',
+                cursor: 'pointer',
+                textAlign: 'center',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              {m}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const Dashboard = () => {
   const { statsData, prodData, MONTHS, YEARS, selectedYear, setSelectedYear, STATS_ITEMS, PROD_ITEMS, calculateTotal, calculateTotalVariation } = useData();
   const [showFlyer, setShowFlyer] = useState(false);
@@ -216,9 +381,19 @@ const Dashboard = () => {
   const prevYearKey = `Ano ${prevYear}`;
   const currYearKey = `Ano ${currYear}`;
 
+  // Filtros múltiplos de meses para Criminalidade e Produtividade (por padrão: JAN a SET)
+  const [selectedStatsMonths, setSelectedStatsMonths] = useState([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+  const [selectedProdMonths, setSelectedProdMonths] = useState([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+
+  const getMonthsTotal = (type, year, item, monthsList) => {
+    const dataArray = type === 'stats' ? statsData[year]?.[item] : prodData[year]?.[item];
+    if (!dataArray) return 0;
+    return monthsList.reduce((acc, mIdx) => acc + Number(dataArray[mIdx] || 0), 0);
+  };
+
   const statsComparativeData = STATS_ITEMS.map(item => {
-    const valPrev = getYearTotal('stats', prevYear, item);
-    const valCurr = getYearTotal('stats', currYear, item);
+    const valPrev = getMonthsTotal('stats', prevYear, item, selectedStatsMonths);
+    const valCurr = getMonthsTotal('stats', currYear, item, selectedStatsMonths);
     const diff = valCurr - valPrev;
     const pct = valPrev > 0 ? ((valCurr - valPrev) / valPrev) * 100 : (valCurr > 0 ? 100 : 0);
     return {
@@ -231,8 +406,8 @@ const Dashboard = () => {
   });
 
   const prodComparativeData = PROD_ITEMS.map(item => {
-    const valPrev = getYearTotal('prod', prevYear, item);
-    const valCurr = getYearTotal('prod', currYear, item);
+    const valPrev = getMonthsTotal('prod', prevYear, item, selectedProdMonths);
+    const valCurr = getMonthsTotal('prod', currYear, item, selectedProdMonths);
     const diff = valCurr - valPrev;
     const pct = valPrev > 0 ? ((valCurr - valPrev) / valPrev) * 100 : (valCurr > 0 ? 100 : 0);
     return {
@@ -344,6 +519,15 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Filtro Múltiplo de Meses para Criminalidade */}
+        <MonthFilterBar
+          months={MONTHS}
+          selectedMonths={selectedStatsMonths}
+          onChange={setSelectedStatsMonths}
+          activeColor="#ef4444"
+          title="Filtro de Meses (Criminalidade)"
+        />
+
         <div style={{ height: '360px', width: '100%' }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
@@ -402,6 +586,15 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* Filtro Múltiplo de Meses para Produtividade */}
+        <MonthFilterBar
+          months={MONTHS}
+          selectedMonths={selectedProdMonths}
+          onChange={setSelectedProdMonths}
+          activeColor="#10b981"
+          title="Filtro de Meses (Produtividade)"
+        />
 
         <div style={{ height: '340px', width: '100%' }}>
           <ResponsiveContainer width="100%" height="100%">
