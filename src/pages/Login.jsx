@@ -43,7 +43,7 @@ const Login = () => {
           margin: '0 auto 20px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
         }}>
-          <img src="/logo.png" alt="Logo" style={{ width: '70px', height: '70px', objectFit: 'contain' }} />
+          <img src="./logo.png" alt="Logo" style={{ width: '70px', height: '70px', objectFit: 'contain' }} />
         </div>
         <h1 style={{
           fontSize: '2.5rem',

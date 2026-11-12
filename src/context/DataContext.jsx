@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { db, isFirebaseReady } from '../lib/firebase';
+import { collection, getDocs, writeBatch, doc } from 'firebase/firestore';
 
 const DataContext = createContext();
 
@@ -35,8 +36,23 @@ export const DataProvider = ({ children }) => {
     return data;
   };
 
-  const [statsData, setStatsData] = useState(() => initializeYearData(STATS_ITEMS));
-  const [prodData, setProdData] = useState(() => initializeYearData(PROD_ITEMS));
+  const [statsData, setStatsData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sisgep_stats_data');
+      return saved ? JSON.parse(saved) : initializeYearData(STATS_ITEMS);
+    } catch {
+      return initializeYearData(STATS_ITEMS);
+    }
+  });
+
+  const [prodData, setProdData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sisgep_prod_data');
+      return saved ? JSON.parse(saved) : initializeYearData(PROD_ITEMS);
+    } catch {
+      return initializeYearData(PROD_ITEMS);
+    }
+  });
 
   const statsRef = useRef(statsData);
   const prodRef = useRef(prodData);
@@ -46,40 +62,48 @@ export const DataProvider = ({ children }) => {
   useEffect(() => { prodRef.current = prodData; }, [prodData]);
   useEffect(() => { isDirtyRef.current = isDirty; }, [isDirty]);
 
+  const sanitizeDocId = (type, year, item) => {
+    return `${type}_${year}_${item.replace(/[\/\s]/g, '_')}`;
+  };
+
   const fetchData = async () => {
+    setLoading(true);
     try {
-      console.log('Buscando dados do Supabase...');
-      setLoading(true);
-      const { data, error } = await supabase.from('data_entries').select('*');
+      if (isFirebaseReady && db) {
+        console.log('Buscando dados do Firebase Firestore...');
+        const querySnapshot = await getDocs(collection(db, 'data_entries'));
 
-      if (error) throw error;
+        if (!querySnapshot.empty) {
+          console.log(`Dados carregados: ${querySnapshot.size} registros encontrados.`);
+          const newStats = initializeYearData(STATS_ITEMS);
+          const newProd = initializeYearData(PROD_ITEMS);
 
-      if (data) {
-        console.log(`Dados carregados: ${data.length} registros encontrados.`);
-        const newStats = initializeYearData(STATS_ITEMS);
-        const newProd = initializeYearData(PROD_ITEMS);
+          querySnapshot.forEach(docSnap => {
+            const entry = docSnap.data();
+            const yearNum = Number(entry.year);
+            const row = DB_MONTHS.map(m => Number(entry[m] || 0));
 
-        data.forEach(entry => {
-          const yearNum = Number(entry.year);
-          const row = DB_MONTHS.map(m => Number(entry[m] || 0));
-
-          if (entry.type === 'stats') {
-            if (newStats[yearNum] && newStats[yearNum][entry.item]) {
-              newStats[yearNum][entry.item] = row;
+            if (entry.type === 'stats') {
+              if (newStats[yearNum] && newStats[yearNum][entry.item]) {
+                newStats[yearNum][entry.item] = row;
+              }
+            } else {
+              if (newProd[yearNum] && newProd[yearNum][entry.item]) {
+                newProd[yearNum][entry.item] = row;
+              }
             }
-          } else {
-            if (newProd[yearNum] && newProd[yearNum][entry.item]) {
-              newProd[yearNum][entry.item] = row;
-            }
-          }
-        });
+          });
 
-        setStatsData(newStats);
-        setProdData(newProd);
-        setIsDirty(false);
+          setStatsData(newStats);
+          setProdData(newProd);
+          localStorage.setItem('sisgep_stats_data', JSON.stringify(newStats));
+          localStorage.setItem('sisgep_prod_data', JSON.stringify(newProd));
+          setIsDirty(false);
+          return;
+        }
       }
     } catch (err) {
-      console.error('Erro ao carregar dados:', err.message);
+      console.warn('Erro ao carregar dados do Firebase (usando cache local):', err.message);
     } finally {
       setLoading(false);
     }
@@ -98,6 +122,10 @@ export const DataProvider = ({ children }) => {
       const currentStats = statsRef.current;
       const currentProd = prodRef.current;
 
+      // Salva no localStorage como garantia imediata
+      localStorage.setItem('sisgep_stats_data', JSON.stringify(currentStats));
+      localStorage.setItem('sisgep_prod_data', JSON.stringify(currentProd));
+
       YEARS.forEach(year => {
         STATS_ITEMS.forEach(item => {
           const row = currentStats[year][item];
@@ -113,18 +141,29 @@ export const DataProvider = ({ children }) => {
         });
       });
 
-      const { error } = await supabase
-        .from('data_entries')
-        .upsert(entries, { onConflict: 'type,year,item' });
-
-      if (error) throw error;
+      if (isFirebaseReady && db) {
+        // Grava no Firestore em lotes de até 400 (limite do Firestore é 500 por lote)
+        const batchSize = 400;
+        for (let i = 0; i < entries.length; i += batchSize) {
+          const batch = writeBatch(db);
+          const chunk = entries.slice(i, i + batchSize);
+          chunk.forEach(entry => {
+            const docId = sanitizeDocId(entry.type, entry.year, entry.item);
+            const docRef = doc(db, 'data_entries', docId);
+            batch.set(docRef, entry);
+          });
+          await batch.commit();
+        }
+        console.log('Dados sincronizados com o Firebase Firestore com sucesso!');
+      } else {
+        console.log('Dados salvos no armazenamento local do navegador.');
+      }
 
       setIsDirty(false);
       setLastSaved(new Date());
-      console.log('Dados salvos com sucesso!');
     } catch (err) {
       console.error('Erro ao salvar:', err.message);
-      alert('Erro ao salvar. Verifique sua conexão.');
+      alert('Erro ao salvar no servidor. Os dados foram mantidos localmente no seu navegador.');
     } finally {
       setLoading(false);
     }

@@ -721,7 +721,7 @@ const FlyerModal = ({ isOpen, onClose }) => {
                         style={{
                           position: 'absolute',
                           inset: 0,
-                          backgroundImage: 'url("/fundo.png")',
+                          backgroundImage: 'url("./fundo.png")',
                           backgroundSize: 'cover',
                           backgroundPosition: 'center',
                           opacity: 0.95,
@@ -765,7 +765,7 @@ const FlyerModal = ({ isOpen, onClose }) => {
 
                       {/* Seta Laranja Superior Esquerda */}
                       <img
-                        src="/setaesquerda.png"
+                        src="./setaesquerda.png"
                         alt="Seta Esquerda"
                         style={{
                           position: 'absolute',
@@ -780,7 +780,7 @@ const FlyerModal = ({ isOpen, onClose }) => {
 
                       {/* Seta Laranja Inferior Direita */}
                       <img
-                        src="/setadireita.png"
+                        src="./setadireita.png"
                         alt="Seta Direita"
                         style={{
                           position: 'absolute',
@@ -989,21 +989,21 @@ const FlyerModal = ({ isOpen, onClose }) => {
                           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '30px' }}>
                             {/* CPM */}
                             <img
-                              src="/logo1.png"
+                              src="./logo1.png"
                               alt="Logo CPM"
                               style={{ height: '76px', width: 'auto', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.8))' }}
                               onError={(e) => (e.target.style.display = 'none')}
                             />
                             {/* PMAM */}
                             <img
-                              src="/logopm.png"
+                              src="./logopm.png"
                               alt="Logo PMAM"
                               style={{ height: '116px', width: 'auto', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.8))' }}
                               onError={(e) => (e.target.style.display = 'none')}
                             />
                             {/* BTL LESTE */}
                             <img
-                              src="/logo.png"
+                              src="./logo.png"
                               alt="Logo BTL LESTE"
                               style={{ height: '86px', width: 'auto', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.8))' }}
                               onError={(e) => (e.target.style.display = 'none')}

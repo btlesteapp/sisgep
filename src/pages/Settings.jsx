@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
-import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import { Settings as SettingsIcon, Lock, Palette, Check, Sun, Moon } from 'lucide-react';
 
 const Settings = () => {
   const { theme, toggleTheme } = useTheme();
+  const { updateUserPassword } = useAuth();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,11 +23,11 @@ const Settings = () => {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    const result = await updateUserPassword(newPassword);
     setLoading(false);
 
-    if (error) {
-      setMessage({ text: error.message, type: 'error' });
+    if (!result.success) {
+      setMessage({ text: result.message, type: 'error' });
     } else {
       setMessage({ text: 'Senha alterada com sucesso!', type: 'success' });
       setNewPassword('');
