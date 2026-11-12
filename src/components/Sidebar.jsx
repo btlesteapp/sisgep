@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { LayoutDashboard, BarChart3, ShieldCheck, LogOut, Menu, X, Settings } from 'lucide-react';
+import { LayoutDashboard, BarChart3, ShieldCheck, LogOut, Menu, X, Settings, FileUp } from 'lucide-react';
 
 const Sidebar = () => {
   const { logout, user } = useAuth();
@@ -14,6 +14,7 @@ const Sidebar = () => {
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/stats', icon: BarChart3, label: 'Estatística' },
     { path: '/productivity', icon: ShieldCheck, label: 'Produtividade' },
+    { path: '/import-pdf', icon: FileUp, label: 'Importar PDF' },
     { path: '/settings', icon: Settings, label: 'Configurações' },
   ];
 

@@ -1,14 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   MapPin, TrendingDown, TrendingUp, Minus, Filter, Search,
-  BarChart3, Table as TableIcon, ShieldAlert, Award
+  BarChart3, Table as TableIcon, ShieldAlert, Award, UploadCloud
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, Cell
 } from 'recharts';
+import PdfImporter from './PdfImporter';
+import { db, isFirebaseReady } from '../lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
-export const ZONE_INDICATORS_DATA = [
+export const DEFAULT_ZONE_DATA = [
   {
     zona: "CENTRO OESTE E CENTRO SUL",
     itens: [
@@ -79,15 +82,43 @@ export const ZONE_INDICATORS_DATA = [
 export const ZoneIndicators = () => {
   const [selectedZona, setSelectedZona] = useState('TODAS');
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState('tabela'); // 'tabela' ou 'grafico'
+  const [viewMode, setViewMode] = useState('tabela'); // 'tabela' | 'grafico' | 'importar'
 
-  const zonasList = ['TODAS', ...ZONE_INDICATORS_DATA.map(z => z.zona)];
+  // Carrega dados salvos localmente ou do Firebase, com fallback no default
+  const [zoneData, setZoneData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sisgep_zone_indicators');
+      return saved ? JSON.parse(saved) : DEFAULT_ZONE_DATA;
+    } catch {
+      return DEFAULT_ZONE_DATA;
+    }
+  });
+
+  useEffect(() => {
+    const fetchRemoteData = async () => {
+      try {
+        if (isFirebaseReady && db) {
+          const docRef = doc(db, 'config', 'zone_indicators');
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists() && docSnap.data()?.data) {
+            setZoneData(docSnap.data().data);
+            localStorage.setItem('sisgep_zone_indicators', JSON.stringify(docSnap.data().data));
+          }
+        }
+      } catch (e) {
+        console.warn('Usando dados locais de indicadores por zona:', e);
+      }
+    };
+    fetchRemoteData();
+  }, []);
+
+  const zonasList = ['TODAS', ...zoneData.map(z => z.zona)];
 
   // Totais por Zona em 2026 vs 2025
   const zoneSummaries = useMemo(() => {
-    return ZONE_INDICATORS_DATA.map(z => {
-      const total2025 = z.itens.reduce((acc, curr) => acc + curr.v2025, 0);
-      const total2026 = z.itens.reduce((acc, curr) => acc + curr.v2026, 0);
+    return zoneData.map(z => {
+      const total2025 = z.itens.reduce((acc, curr) => acc + (curr.v2025 || 0), 0);
+      const total2026 = z.itens.reduce((acc, curr) => acc + (curr.v2026 || 0), 0);
       const varPct = total2025 > 0 ? ((total2026 - total2025) / total2025) * 100 : 0;
       return {
         zona: z.zona,
@@ -97,11 +128,11 @@ export const ZoneIndicators = () => {
         diff: total2026 - total2025
       };
     });
-  }, []);
+  }, [zoneData]);
 
   // Dados filtrados para a tabela
   const filteredData = useMemo(() => {
-    return ZONE_INDICATORS_DATA
+    return zoneData
       .filter(z => selectedZona === 'TODAS' || z.zona === selectedZona)
       .map(z => ({
         ...z,
@@ -110,7 +141,7 @@ export const ZoneIndicators = () => {
         )
       }))
       .filter(z => z.itens.length > 0);
-  }, [selectedZona, searchTerm]);
+  }, [zoneData, selectedZona, searchTerm]);
 
   // Dados para o gráfico de comparação por Zona
   const chartData = useMemo(() => {
@@ -194,8 +225,8 @@ export const ZoneIndicators = () => {
           </div>
         </div>
 
-        {/* Toggle Tabela / Gráfico */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        {/* Abas: Tabela / Gráfico / Importar PDF */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
           <button
             onClick={() => setViewMode('tabela')}
             style={{
@@ -233,6 +264,25 @@ export const ZoneIndicators = () => {
             }}
           >
             <BarChart3 size={14} /> Gráfico Comparativo
+          </button>
+          <button
+            onClick={() => setViewMode('importar')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              borderRadius: '8px',
+              fontSize: '0.75rem',
+              fontWeight: '700',
+              border: viewMode === 'importar' ? '1px solid var(--primary-color)' : '1px solid var(--surface-border)',
+              background: viewMode === 'importar' ? 'var(--primary-color)' : 'transparent',
+              color: viewMode === 'importar' ? 'white' : 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            <UploadCloud size={14} /> Importar PDF / Dados
           </button>
         </div>
       </div>
@@ -298,184 +348,197 @@ export const ZoneIndicators = () => {
         ))}
       </div>
 
-      {/* Barra de Filtros e Busca */}
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '0.8rem',
-        marginBottom: '1.2rem',
-        background: 'rgba(255, 255, 255, 0.02)',
-        padding: '0.6rem',
-        borderRadius: '10px',
-        border: '1px solid var(--surface-border)'
-      }}>
-        {/* Filtro por Zona */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginRight: '4px' }}>
-            Filtrar Zona:
-          </span>
-          {zonasList.map(z => (
-            <button
-              key={z}
-              onClick={() => setSelectedZona(z)}
-              style={{
-                padding: '5px 10px',
-                borderRadius: '6px',
-                fontSize: '0.65rem',
-                fontWeight: '700',
-                textTransform: 'uppercase',
-                border: selectedZona === z ? '1px solid var(--primary-color)' : '1px solid var(--surface-border)',
-                background: selectedZona === z ? 'var(--primary-color)' : 'transparent',
-                color: selectedZona === z ? 'white' : 'var(--text-muted)',
-                cursor: 'pointer',
-                transition: 'all 0.15s'
-              }}
-            >
-              {z}
-            </button>
-          ))}
-        </div>
-
-        {/* Campo de Busca por Natureza */}
-        <div style={{ position: 'relative', minWidth: '220px' }}>
-          <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input
-            type="text"
-            placeholder="Buscar crime (ex: Homicídio)..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '6px 12px 6px 30px',
-              borderRadius: '6px',
-              border: '1px solid var(--surface-border)',
-              background: 'var(--surface-color)',
-              color: 'var(--text-color)',
-              fontSize: '0.75rem',
-              outline: 'none'
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Conteúdo: Visualização em Tabela ou Gráfico */}
-      {viewMode === 'grafico' ? (
-        <div style={{ padding: '1rem', background: 'var(--surface-color)', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>
-          <h3 style={{ fontSize: '0.9rem', marginBottom: '1rem', color: 'var(--text-color)' }}>
-            Comparativo de Ocorrências Totais por Zona (Jan a Set - 2025 vs 2026)
-          </h3>
-          <div style={{ height: '320px', width: '100%' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-border)" vertical={false} />
-                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} />
-                <YAxis stroke="var(--text-muted)" fontSize={10} />
-                <Tooltip
-                  contentStyle={{ background: 'var(--surface-color)', border: '1px solid var(--surface-border)', borderRadius: '8px', fontSize: '0.8rem' }}
-                />
-                <Legend wrapperStyle={{ fontSize: '0.75rem' }} />
-                <Bar dataKey="2025" fill="#94a3b8" radius={[4, 4, 0, 0]} name="Ano 2025" />
-                <Bar dataKey="2026" fill="var(--primary-color)" radius={[4, 4, 0, 0]} name="Ano 2026" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+      {/* Se estiver no modo Importar PDF */}
+      {viewMode === 'importar' ? (
+        <PdfImporter
+          currentData={zoneData}
+          onDataImported={(newData) => {
+            setZoneData(newData);
+            setViewMode('tabela');
+          }}
+        />
       ) : (
-        <div style={{ overflowX: 'auto', borderRadius: '10px', border: '1px solid var(--surface-border)' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.75rem' }}>
-            <thead>
-              <tr style={{ background: 'var(--surface-border)', color: 'var(--text-color)', fontWeight: '800', textTransform: 'uppercase' }}>
-                <th style={{ padding: '10px 14px', textAlign: 'left', minWidth: '160px' }}>ZONA</th>
-                <th style={{ padding: '10px 14px', textAlign: 'left', minWidth: '220px' }}>NATUREZA</th>
-                <th style={{ padding: '10px 8px' }}>2021</th>
-                <th style={{ padding: '10px 8px' }}>2022</th>
-                <th style={{ padding: '10px 8px' }}>2023</th>
-                <th style={{ padding: '10px 8px' }}>2024</th>
-                <th style={{ padding: '10px 8px', background: 'rgba(59, 130, 246, 0.08)' }}>2025</th>
-                <th style={{ padding: '10px 8px', background: 'rgba(59, 130, 246, 0.15)', fontWeight: '900', color: 'var(--primary-color)' }}>2026</th>
-                <th style={{ padding: '10px 12px', minWidth: '140px' }}>COMPARATIVO %</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredData.map((zonaObj) => {
-                return zonaObj.itens.map((item, idx) => {
-                  const badge = getBadgeStyle(item.tipo);
-                  const isFirstOfZone = idx === 0;
+        <>
+          {/* Barra de Filtros e Busca */}
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.8rem',
+            marginBottom: '1.2rem',
+            background: 'rgba(255, 255, 255, 0.02)',
+            padding: '0.6rem',
+            borderRadius: '10px',
+            border: '1px solid var(--surface-border)'
+          }}>
+            {/* Filtro por Zona */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginRight: '4px' }}>
+                Filtrar Zona:
+              </span>
+              {zonasList.map(z => (
+                <button
+                  key={z}
+                  onClick={() => setSelectedZona(z)}
+                  style={{
+                    padding: '5px 10px',
+                    borderRadius: '6px',
+                    fontSize: '0.65rem',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    border: selectedZona === z ? '1px solid var(--primary-color)' : '1px solid var(--surface-border)',
+                    background: selectedZona === z ? 'var(--primary-color)' : 'transparent',
+                    color: selectedZona === z ? 'white' : 'var(--text-muted)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  {z}
+                </button>
+              ))}
+            </div>
 
-                  return (
-                    <tr
-                      key={`${zonaObj.zona}-${item.natureza}`}
-                      style={{
-                        borderBottom: '1px solid var(--surface-border)',
-                        background: idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.015)'
-                      }}
-                    >
-                      {/* Coluna ZONA com rowspan visual */}
-                      {isFirstOfZone && (
-                        <td
-                          rowSpan={zonaObj.itens.length}
+            {/* Campo de Busca por Natureza */}
+            <div style={{ position: 'relative', minWidth: '220px' }}>
+              <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input
+                type="text"
+                placeholder="Buscar crime (ex: Homicídio)..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '6px 12px 6px 30px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--surface-border)',
+                  background: 'var(--surface-color)',
+                  color: 'var(--text-color)',
+                  fontSize: '0.75rem',
+                  outline: 'none'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Conteúdo: Visualização em Tabela ou Gráfico */}
+          {viewMode === 'grafico' ? (
+            <div style={{ padding: '1rem', background: 'var(--surface-color)', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>
+              <h3 style={{ fontSize: '0.9rem', marginBottom: '1rem', color: 'var(--text-color)' }}>
+                Comparativo de Ocorrências Totais por Zona (Jan a Set - 2025 vs 2026)
+              </h3>
+              <div style={{ height: '320px', width: '100%' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-border)" vertical={false} />
+                    <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} />
+                    <YAxis stroke="var(--text-muted)" fontSize={10} />
+                    <Tooltip
+                      contentStyle={{ background: 'var(--surface-color)', border: '1px solid var(--surface-border)', borderRadius: '8px', fontSize: '0.8rem' }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '0.75rem' }} />
+                    <Bar dataKey="2025" fill="#94a3b8" radius={[4, 4, 0, 0]} name="Ano 2025" />
+                    <Bar dataKey="2026" fill="var(--primary-color)" radius={[4, 4, 0, 0]} name="Ano 2026" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto', borderRadius: '10px', border: '1px solid var(--surface-border)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.75rem' }}>
+                <thead>
+                  <tr style={{ background: 'var(--surface-border)', color: 'var(--text-color)', fontWeight: '800', textTransform: 'uppercase' }}>
+                    <th style={{ padding: '10px 14px', textAlign: 'left', minWidth: '160px' }}>ZONA</th>
+                    <th style={{ padding: '10px 14px', textAlign: 'left', minWidth: '220px' }}>NATUREZA</th>
+                    <th style={{ padding: '10px 8px' }}>2021</th>
+                    <th style={{ padding: '10px 8px' }}>2022</th>
+                    <th style={{ padding: '10px 8px' }}>2023</th>
+                    <th style={{ padding: '10px 8px' }}>2024</th>
+                    <th style={{ padding: '10px 8px', background: 'rgba(59, 130, 246, 0.08)' }}>2025</th>
+                    <th style={{ padding: '10px 8px', background: 'rgba(59, 130, 246, 0.15)', fontWeight: '900', color: 'var(--primary-color)' }}>2026</th>
+                    <th style={{ padding: '10px 12px', minWidth: '140px' }}>COMPARATIVO %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredData.map((zonaObj) => {
+                    return zonaObj.itens.map((item, idx) => {
+                      const badge = getBadgeStyle(item.tipo);
+                      const isFirstOfZone = idx === 0;
+
+                      return (
+                        <tr
+                          key={`${zonaObj.zona}-${item.natureza}`}
                           style={{
-                            padding: '12px 14px',
-                            fontWeight: '900',
-                            textAlign: 'left',
-                            verticalAlign: 'middle',
-                            borderRight: '1px solid var(--surface-border)',
-                            color: 'var(--primary-color)',
-                            letterSpacing: '0.5px'
+                            borderBottom: '1px solid var(--surface-border)',
+                            background: idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.015)'
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <MapPin size={14} />
-                            {zonaObj.zona}
-                          </div>
-                        </td>
-                      )}
+                          {/* Coluna ZONA com rowspan visual */}
+                          {isFirstOfZone && (
+                            <td
+                              rowSpan={zonaObj.itens.length}
+                              style={{
+                                padding: '12px 14px',
+                                fontWeight: '900',
+                                textAlign: 'left',
+                                verticalAlign: 'middle',
+                                borderRight: '1px solid var(--surface-border)',
+                                color: 'var(--primary-color)',
+                                letterSpacing: '0.5px'
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <MapPin size={14} />
+                                {zonaObj.zona}
+                              </div>
+                            </td>
+                          )}
 
-                      {/* NATUREZA */}
-                      <td style={{ padding: '8px 14px', textAlign: 'left', fontWeight: '600', color: 'var(--text-color)' }}>
-                        {item.natureza}
-                      </td>
+                          {/* NATUREZA */}
+                          <td style={{ padding: '8px 14px', textAlign: 'left', fontWeight: '600', color: 'var(--text-color)' }}>
+                            {item.natureza}
+                          </td>
 
-                      {/* ANOS */}
-                      <td style={{ padding: '8px 8px', color: 'var(--text-muted)' }}>{item.v2021}</td>
-                      <td style={{ padding: '8px 8px', color: 'var(--text-muted)' }}>{item.v2022}</td>
-                      <td style={{ padding: '8px 8px', color: 'var(--text-muted)' }}>{item.v2023}</td>
-                      <td style={{ padding: '8px 8px', color: 'var(--text-muted)' }}>{item.v2024}</td>
-                      <td style={{ padding: '8px 8px', background: 'rgba(59, 130, 246, 0.04)', fontWeight: '600' }}>{item.v2025}</td>
-                      <td style={{ padding: '8px 8px', background: 'rgba(59, 130, 246, 0.08)', fontWeight: '800', color: 'var(--primary-color)' }}>
-                        {item.v2026}
-                      </td>
+                          {/* ANOS */}
+                          <td style={{ padding: '8px 8px', color: 'var(--text-muted)' }}>{item.v2021}</td>
+                          <td style={{ padding: '8px 8px', color: 'var(--text-muted)' }}>{item.v2022}</td>
+                          <td style={{ padding: '8px 8px', color: 'var(--text-muted)' }}>{item.v2023}</td>
+                          <td style={{ padding: '8px 8px', color: 'var(--text-muted)' }}>{item.v2024}</td>
+                          <td style={{ padding: '8px 8px', background: 'rgba(59, 130, 246, 0.04)', fontWeight: '600' }}>{item.v2025}</td>
+                          <td style={{ padding: '8px 8px', background: 'rgba(59, 130, 246, 0.08)', fontWeight: '800', color: 'var(--primary-color)' }}>
+                            {item.v2026}
+                          </td>
 
-                      {/* COMPARATIVO BADGE */}
-                      <td style={{ padding: '8px 12px' }}>
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '4px',
-                            padding: '3px 8px',
-                            borderRadius: '6px',
-                            fontSize: '0.68rem',
-                            fontWeight: '800',
-                            ...badge
-                          }}
-                        >
-                          {item.tipo === 'queda' && <TrendingDown size={11} />}
-                          {item.tipo === 'alta' && <TrendingUp size={11} />}
-                          {item.tipo === 'neutro' && <Minus size={11} />}
-                          {item.comp}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                });
-              })}
-            </tbody>
-          </table>
-        </div>
+                          {/* COMPARATIVO BADGE */}
+                          <td style={{ padding: '8px 12px' }}>
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '4px',
+                                padding: '3px 8px',
+                                borderRadius: '6px',
+                                fontSize: '0.68rem',
+                                fontWeight: '800',
+                                ...badge
+                              }}
+                            >
+                              {item.tipo === 'queda' && <TrendingDown size={11} />}
+                              {item.tipo === 'alta' && <TrendingUp size={11} />}
+                              {item.tipo === 'neutro' && <Minus size={11} />}
+                              {item.comp}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
     </section>
   );
