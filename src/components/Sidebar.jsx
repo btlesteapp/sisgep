@@ -75,7 +75,7 @@ const Sidebar = () => {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '3rem', padding: '0 0.5rem' }}>
           <img src="./logo.png" alt="Logo BTL LESTE" style={{ width: '48px', height: '48px', objectFit: 'contain', minWidth: '32px' }} />
-          <h2 className="gradient-text sidebar-text" style={{ fontSize: '1.2rem', whiteSpace: 'nowrap' }}>SGEP-LESTE</h2>
+          <h2 className="gradient-text sidebar-text" style={{ fontSize: '1.2rem', whiteSpace: 'nowrap' }}>SISGEP-LESTE</h2>
         </div>
 
         <nav style={{ flex: 1 }}>

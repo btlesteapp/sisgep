@@ -8,6 +8,7 @@ import {
   TrendingUp, TrendingDown, Minus, Layers as LayersIcon, Image as ImageIcon
 } from 'lucide-react';
 import FlyerModal from '../components/FlyerModal';
+import ZoneIndicators from '../components/ZoneIndicators';
 
 const SectionTitle = ({ title, icon: Icon }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', marginTop: '1.5rem' }}>
@@ -373,6 +374,9 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Indicadores Por Zona (PDF / Estatísticas Oficiais de Manaus) */}
+      <ZoneIndicators />
 
       <style dangerouslySetInnerHTML={{
         __html: `
