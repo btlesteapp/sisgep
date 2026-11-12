@@ -393,3 +393,4 @@ export const PdfImporter = ({ onDataImported, currentData }) => {
 };
 
 export default PdfImporter;
+

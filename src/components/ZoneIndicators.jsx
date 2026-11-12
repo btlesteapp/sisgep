@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   MapPin, TrendingDown, TrendingUp, Minus, Filter, Search,
-  BarChart3, Table as TableIcon, ShieldAlert, Award, UploadCloud
+  BarChart3, Table as TableIcon, ShieldAlert, Award, UploadCloud, RotateCcw
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -9,7 +9,7 @@ import {
 } from 'recharts';
 import PdfImporter from './PdfImporter';
 import { db, isFirebaseReady } from '../lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export const DEFAULT_ZONE_DATA = [
   {
@@ -84,11 +84,24 @@ export const ZoneIndicators = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('tabela'); // 'tabela' | 'grafico' | 'importar'
 
+  const sanitizeZoneData = (data) => {
+    if (!Array.isArray(data) || data.length === 0) return DEFAULT_ZONE_DATA;
+    const isCorrupted = data.some(z => 
+      !z.itens || z.itens.some(i => i.comp && i.comp.length > 30)
+    );
+    if (isCorrupted) {
+      console.warn('Dados corrompidos detectados no cache de zona. Restaurando padrão oficial.');
+      localStorage.removeItem('sisgep_zone_indicators');
+      return DEFAULT_ZONE_DATA;
+    }
+    return data;
+  };
+
   // Carrega dados salvos localmente ou do Firebase, com fallback no default
   const [zoneData, setZoneData] = useState(() => {
     try {
       const saved = localStorage.getItem('sisgep_zone_indicators');
-      return saved ? JSON.parse(saved) : DEFAULT_ZONE_DATA;
+      return saved ? sanitizeZoneData(JSON.parse(saved)) : DEFAULT_ZONE_DATA;
     } catch {
       return DEFAULT_ZONE_DATA;
     }
@@ -101,8 +114,9 @@ export const ZoneIndicators = () => {
           const docRef = doc(db, 'config', 'zone_indicators');
           const docSnap = await getDoc(docRef);
           if (docSnap.exists() && docSnap.data()?.data) {
-            setZoneData(docSnap.data().data);
-            localStorage.setItem('sisgep_zone_indicators', JSON.stringify(docSnap.data().data));
+            const clean = sanitizeZoneData(docSnap.data().data);
+            setZoneData(clean);
+            localStorage.setItem('sisgep_zone_indicators', JSON.stringify(clean));
           }
         }
       } catch (e) {
@@ -283,6 +297,37 @@ export const ZoneIndicators = () => {
             }}
           >
             <UploadCloud size={14} /> Importar PDF / Dados
+          </button>
+          <button
+            onClick={() => {
+              if (window.confirm('Deseja restaurar a tabela oficial original?')) {
+                localStorage.removeItem('sisgep_zone_indicators');
+                setZoneData(DEFAULT_ZONE_DATA);
+                if (isFirebaseReady && db) {
+                  setDoc(doc(db, 'config', 'zone_indicators'), {
+                    updatedAt: new Date().toISOString(),
+                    data: DEFAULT_ZONE_DATA
+                  }).catch(console.error);
+                }
+              }
+            }}
+            title="Restaurar dados oficiais originais"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 12px',
+              borderRadius: '8px',
+              fontSize: '0.75rem',
+              fontWeight: '700',
+              border: '1px solid var(--surface-border)',
+              background: 'transparent',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            <RotateCcw size={14} /> Restaurar Padrão
           </button>
         </div>
       </div>

@@ -18,13 +18,13 @@ export async function extractTextFromPdf(file) {
     const page = await pdf.getPage(pageNum);
     const textContent = await page.getTextContent();
     const pageText = textContent.items.map(item => item.str).join(' ');
-    fullText += pageText + '\n';
+    fullText += pageText + ' ';
   }
   
   return fullText;
 }
 
-const KNOWN_ZONAS = [
+const ORDERED_ZONAS = [
   "CENTRO OESTE E CENTRO SUL",
   "LESTE",
   "NORTE",
@@ -32,97 +32,137 @@ const KNOWN_ZONAS = [
   "SUL"
 ];
 
-const KNOWN_NATUREZAS = [
-  "HOMICÍDIO",
-  "LATROCÍNIO",
+const ORDERED_CRIMES = [
+  "ROUBO EM ESTABELECIMENTO COMERCIAL",
   "ROUBO DE VEÍCULO",
   "FURTO DE VEÍCULO",
   "ROUBO EM RESIDÊNCIA",
   "ROUBO A TRANSEUNTE",
   "ROUBO A COLETIVO",
-  "ROUBO EM ESTABELECIMENTO COMERCIAL"
+  "HOMICÍDIO",
+  "LATROCÍNIO"
 ];
 
 /**
- * Analisador inteligente de linhas do PDF ou texto colado
- * Reconhece Zonas, Crimes, Anos (2021 a 2026) e Comparativo
+ * Analisador ultra-robusto de relatórios PDF de Indicadores por Zona de Manaus
+ * Divide as 5 Zonas e 8 Crimes de forma exata e limpa
+ * @param {string} rawText 
+ * @returns {Array}
  */
 export function parseZoneIndicatorsText(rawText) {
   if (!rawText || typeof rawText !== 'string') {
     throw new Error('Texto vazio ou formato inválido.');
   }
 
-  // Normaliza o texto
-  const cleanText = rawText
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
-    .toUpperCase();
+  // Normaliza múltiplos espaços e quebras de linha para um único espaço
+  const normalized = rawText
+    .toUpperCase()
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  const results = [];
+  // Localiza cada ocorrência das naturezas conhecidas
+  const sortedCrimes = [...ORDERED_CRIMES].sort((a, b) => b.length - a.length);
 
-  // Percorre cada zona conhecida
-  KNOWN_ZONAS.forEach(zonaName => {
-    const itens = [];
+  const occurrences = [];
+  for (const crime of sortedCrimes) {
+    let pos = 0;
+    while ((pos = normalized.indexOf(crime, pos)) !== -1) {
+      occurrences.push({ crime, index: pos });
+      pos += crime.length;
+    }
+  }
 
-    // Localiza a seção da zona no texto ou analisa linha a linha
-    KNOWN_NATUREZAS.forEach(natureza => {
-      // Regex procurando a natureza seguida de números
-      // Ex: HOMICÍDIO 67 70 68 38 29 13 -16 REGISTROS
-      // ou com quebras de linha e tabulações
-      const escapedNat = natureza.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      
-      // Procura números após a menção da natureza
-      const regex = new RegExp(
-        `${escapedNat}[^0-9\\n]*([0-9]+)[^0-9\\n]+([0-9]+)[^0-9\\n]+([0-9]+)[^0-9\\n]+([0-9]+)[^0-9\\n]+([0-9]+)[^0-9\\n]+([0-9]+)([^\\n\\r]*)`,
-        'gi'
-      );
+  // Ordena pela posição no texto
+  occurrences.sort((a, b) => a.index - b.index);
 
-      // Vamos também tentar uma abordagem flexível baseada em tokens
-      let match = regex.exec(cleanText);
-      if (match) {
-        const v2021 = parseInt(match[1], 10) || 0;
-        const v2022 = parseInt(match[2], 10) || 0;
-        const v2023 = parseInt(match[3], 10) || 0;
-        const v2024 = parseInt(match[4], 10) || 0;
-        const v2025 = parseInt(match[5], 10) || 0;
-        const v2026 = parseInt(match[6], 10) || 0;
-        const compRaw = (match[7] || '').trim();
+  // Remove sobreposições
+  const nonOverlapping = [];
+  let lastEnd = -1;
+  for (const occ of occurrences) {
+    if (occ.index >= lastEnd) {
+      nonOverlapping.push(occ);
+      lastEnd = occ.index + occ.crime.length;
+    }
+  }
 
-        let tipo = 'neutro';
-        if (compRaw.includes('-') || v2026 < v2025) tipo = 'queda';
-        else if (compRaw.includes('+') || v2026 > v2025) tipo = 'alta';
+  if (nonOverlapping.length === 0) {
+    throw new Error('Nenhum crime/natureza reconhecido no arquivo.');
+  }
 
-        let compStr = compRaw;
-        if (!compStr) {
-          if (v2025 > 0) {
-            const pct = Math.round(((v2026 - v2025) / v2025) * 100);
-            compStr = `${pct > 0 ? '+' : ''}${pct}%`;
-          } else {
-            compStr = v2026 === v2025 ? 'NEUTRO' : `+${v2026 - v2025} REGISTROS`;
-          }
-        }
+  const rows = [];
+  for (let i = 0; i < nonOverlapping.length; i++) {
+    const current = nonOverlapping[i];
+    const nextStart = i + 1 < nonOverlapping.length ? nonOverlapping[i + 1].index : normalized.length;
+    let snippet = normalized.substring(current.index + current.crime.length, nextStart).trim();
 
-        itens.push({
-          natureza,
-          v2021,
-          v2022,
-          v2023,
-          v2024,
-          v2025,
-          v2026,
-          comp: compStr,
-          tipo
-        });
+    // Remove rodapés conhecidos
+    const footerIdx = snippet.indexOf('INDICADORES');
+    if (footerIdx !== -1) {
+      snippet = snippet.substring(0, footerIdx).trim();
+    }
+
+    // Snippet contém: 6 números e o comparativo
+    // Ex: "67 70 68 38 29 13 -16 REGISTROS"
+    const tokens = snippet.split(' ').filter(Boolean);
+    const nums = [];
+    let compTokens = [];
+
+    for (let t = 0; t < tokens.length; t++) {
+      if (nums.length < 6 && /^\d+$/.test(tokens[t])) {
+        nums.push(parseInt(tokens[t], 10));
+      } else {
+        compTokens.push(tokens[t]);
       }
-    });
+    }
 
-    if (itens.length > 0) {
-      results.push({
+    let compStr = compTokens.join(' ').trim();
+    const v2025 = nums[4] ?? 0;
+    const v2026 = nums[5] ?? 0;
+    let tipo = 'neutro';
+
+    if (compStr) {
+      if (compStr.includes('-')) tipo = 'queda';
+      else if (compStr.includes('+') || (compStr.includes('%') && parseFloat(compStr) > 0)) tipo = 'alta';
+      else if (compStr.includes('NEUTRO')) tipo = 'neutro';
+    } else {
+      if (v2026 < v2025) {
+        tipo = 'queda';
+        compStr = `-${v2025 - v2026} REGISTROS`;
+      } else if (v2026 > v2025) {
+        tipo = 'alta';
+        compStr = `+${v2026 - v2025} REGISTROS`;
+      } else {
+        compStr = 'NEUTRO';
+      }
+    }
+
+    rows.push({
+      natureza: current.crime,
+      v2021: nums[0] ?? 0,
+      v2022: nums[1] ?? 0,
+      v2023: nums[2] ?? 0,
+      v2024: nums[3] ?? 0,
+      v2025: v2025,
+      v2026: v2026,
+      comp: compStr,
+      tipo
+    });
+  }
+
+  // Agrupa os 8 crimes em cada uma das 5 Zonas
+  const zones = [];
+  const itemsPerZone = 8;
+  for (let z = 0; z < ORDERED_ZONAS.length; z++) {
+    const zonaName = ORDERED_ZONAS[z];
+    const zoneItems = rows.slice(z * itemsPerZone, (z + 1) * itemsPerZone);
+    if (zoneItems.length > 0) {
+      zones.push({
         zona: zonaName,
-        itens
+        itens: zoneItems
       });
     }
-  });
+  }
 
-  return results;
+  return zones;
 }
