@@ -300,6 +300,144 @@ const MonthFilterBar = ({
   );
 };
 
+const YearFilterSelector = ({
+  years,
+  yearBase,
+  yearTarget,
+  onYearBaseChange,
+  onYearTargetChange,
+  activeColor = 'var(--primary-color)'
+}) => {
+  return (
+    <div style={{
+      display: 'flex',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: '8px',
+      background: 'rgba(255, 255, 255, 0.02)',
+      border: '1px solid var(--surface-border)',
+      padding: '8px 12px',
+      borderRadius: '10px',
+      marginBottom: '0.8rem'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Calendar size={14} color={activeColor} />
+          <span style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--text-color)', textTransform: 'uppercase' }}>
+            Comparar Anos:
+          </span>
+        </div>
+
+        {/* Ano Base */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <span style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: '700' }}>Ano Base:</span>
+          <select
+            value={yearBase}
+            onChange={(e) => onYearBaseChange(Number(e.target.value))}
+            style={{
+              padding: '4px 8px',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              fontWeight: '800',
+              border: '1px solid var(--surface-border)',
+              background: 'var(--surface-color)',
+              color: 'var(--text-color)',
+              cursor: 'pointer',
+              outline: 'none'
+            }}
+          >
+            {years.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
+
+        <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)' }}>vs</span>
+
+        {/* Ano Alvo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <span style={{ fontSize: '0.68rem', color: activeColor, fontWeight: '700' }}>Ano Comparado:</span>
+          <select
+            value={yearTarget}
+            onChange={(e) => onYearTargetChange(Number(e.target.value))}
+            style={{
+              padding: '4px 8px',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              fontWeight: '800',
+              border: `1.5px solid ${activeColor}`,
+              background: 'var(--surface-color)',
+              color: activeColor,
+              cursor: 'pointer',
+              outline: 'none'
+            }}
+          >
+            {years.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Pílulas de Atalhos Rápidos de Anos */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          onClick={() => { onYearBaseChange(2025); onYearTargetChange(2026); }}
+          style={{
+            padding: '3px 8px',
+            borderRadius: '5px',
+            fontSize: '0.65rem',
+            fontWeight: '700',
+            border: '1px solid var(--surface-border)',
+            background: yearBase === 2025 && yearTarget === 2026 ? activeColor : 'transparent',
+            color: yearBase === 2025 && yearTarget === 2026 ? '#fff' : 'var(--text-muted)',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          2025 vs 2026
+        </button>
+        <button
+          type="button"
+          onClick={() => { onYearBaseChange(2024); onYearTargetChange(2025); }}
+          style={{
+            padding: '3px 8px',
+            borderRadius: '5px',
+            fontSize: '0.65rem',
+            fontWeight: '700',
+            border: '1px solid var(--surface-border)',
+            background: yearBase === 2024 && yearTarget === 2025 ? activeColor : 'transparent',
+            color: yearBase === 2024 && yearTarget === 2025 ? '#fff' : 'var(--text-muted)',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          2024 vs 2025
+        </button>
+        <button
+          type="button"
+          onClick={() => { onYearBaseChange(2021); onYearTargetChange(2026); }}
+          style={{
+            padding: '3px 8px',
+            borderRadius: '5px',
+            fontSize: '0.65rem',
+            fontWeight: '700',
+            border: '1px solid var(--surface-border)',
+            background: yearBase === 2021 && yearTarget === 2026 ? activeColor : 'transparent',
+            color: yearBase === 2021 && yearTarget === 2026 ? '#fff' : 'var(--text-muted)',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          2021 vs 2026
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const Dashboard = () => {
   const { statsData, prodData, MONTHS, YEARS, selectedYear, setSelectedYear, STATS_ITEMS, PROD_ITEMS, calculateTotal, calculateTotalVariation } = useData();
   const [showFlyer, setShowFlyer] = useState(false);
@@ -373,13 +511,16 @@ const Dashboard = () => {
     });
   }
 
-  // Anos para comparação direta entre períodos
-  const currYear = isAllYears ? YEARS[YEARS.length - 1] : Number(selectedYear);
-  const prevYear = isAllYears 
-    ? YEARS[YEARS.length - 2] 
-    : (currYear > YEARS[0] ? currYear - 1 : currYear);
-  const prevYearKey = `Ano ${prevYear}`;
-  const currYearKey = `Ano ${currYear}`;
+  // Filtros de Anos para Criminalidade e Produtividade (Padrão: 2025 vs 2026)
+  const [statsYearBase, setStatsYearBase] = useState(2025);
+  const [statsYearTarget, setStatsYearTarget] = useState(2026);
+  const [prodYearBase, setProdYearBase] = useState(2025);
+  const [prodYearTarget, setProdYearTarget] = useState(2026);
+
+  const statsYearBaseKey = `Ano ${statsYearBase}`;
+  const statsYearTargetKey = `Ano ${statsYearTarget}`;
+  const prodYearBaseKey = `Ano ${prodYearBase}`;
+  const prodYearTargetKey = `Ano ${prodYearTarget}`;
 
   // Filtros múltiplos de meses para Criminalidade e Produtividade (por padrão: JAN a SET)
   const [selectedStatsMonths, setSelectedStatsMonths] = useState([0, 1, 2, 3, 4, 5, 6, 7, 8]);
@@ -392,28 +533,28 @@ const Dashboard = () => {
   };
 
   const statsComparativeData = STATS_ITEMS.map(item => {
-    const valPrev = getMonthsTotal('stats', prevYear, item, selectedStatsMonths);
-    const valCurr = getMonthsTotal('stats', currYear, item, selectedStatsMonths);
+    const valPrev = getMonthsTotal('stats', statsYearBase, item, selectedStatsMonths);
+    const valCurr = getMonthsTotal('stats', statsYearTarget, item, selectedStatsMonths);
     const diff = valCurr - valPrev;
     const pct = valPrev > 0 ? ((valCurr - valPrev) / valPrev) * 100 : (valCurr > 0 ? 100 : 0);
     return {
       name: item,
-      [prevYearKey]: valPrev,
-      [currYearKey]: valCurr,
+      [statsYearBaseKey]: valPrev,
+      [statsYearTargetKey]: valCurr,
       diff,
       pct
     };
   });
 
   const prodComparativeData = PROD_ITEMS.map(item => {
-    const valPrev = getMonthsTotal('prod', prevYear, item, selectedProdMonths);
-    const valCurr = getMonthsTotal('prod', currYear, item, selectedProdMonths);
+    const valPrev = getMonthsTotal('prod', prodYearBase, item, selectedProdMonths);
+    const valCurr = getMonthsTotal('prod', prodYearTarget, item, selectedProdMonths);
     const diff = valCurr - valPrev;
     const pct = valPrev > 0 ? ((valCurr - valPrev) / valPrev) * 100 : (valCurr > 0 ? 100 : 0);
     return {
       name: item,
-      [prevYearKey]: valPrev,
-      [currYearKey]: valCurr,
+      [prodYearBaseKey]: valPrev,
+      [prodYearTargetKey]: valCurr,
       diff,
       pct
     };
@@ -499,25 +640,35 @@ const Dashboard = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <AlertTriangle size={20} color="#ef4444" />
               <h3 style={{ fontSize: '1.15rem', fontWeight: '800', margin: 0 }}>
-                Comparativo dos Índices Criminais ({prevYear} vs {currYear})
+                Comparativo dos Índices Criminais ({statsYearBase} vs {statsYearTarget})
               </h3>
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '4px 0 0 0' }}>
-              Comparativo direto de ocorrências criminais entre os anos {prevYear} e {currYear}
+              Comparativo direto de ocorrências criminais entre os anos {statsYearBase} e {statsYearTarget}
             </p>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.75rem', fontWeight: '700' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#94a3b8', display: 'inline-block' }}></span>
-              <span style={{ color: 'var(--text-muted)' }}>Ano {prevYear}</span>
+              <span style={{ color: 'var(--text-muted)' }}>{statsYearBaseKey}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#ef4444', display: 'inline-block' }}></span>
-              <span style={{ color: '#ef4444' }}>Ano {currYear}</span>
+              <span style={{ color: '#ef4444' }}>{statsYearTargetKey}</span>
             </div>
           </div>
         </div>
+
+        {/* Filtro de Ano para Criminalidade */}
+        <YearFilterSelector
+          years={YEARS}
+          yearBase={statsYearBase}
+          yearTarget={statsYearTarget}
+          onYearBaseChange={setStatsYearBase}
+          onYearTargetChange={setStatsYearTarget}
+          activeColor="#ef4444"
+        />
 
         {/* Filtro Múltiplo de Meses para Criminalidade */}
         <MonthFilterBar
@@ -546,14 +697,14 @@ const Dashboard = () => {
               />
               <YAxis stroke="var(--text-muted)" fontSize={10} />
               <Tooltip
-                content={<ComparativeTooltip prevYearKey={prevYearKey} currYearKey={currYearKey} isInverse={true} />}
+                content={<ComparativeTooltip prevYearKey={statsYearBaseKey} currYearKey={statsYearTargetKey} isInverse={true} />}
               />
               <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '0.8rem', paddingBottom: '10px' }} />
-              <Bar dataKey={prevYearKey} fill="#94a3b8" radius={[4, 4, 0, 0]}>
-                <LabelList dataKey={prevYearKey} position="top" fill="var(--text-muted)" fontSize={9} />
+              <Bar dataKey={statsYearBaseKey} fill="#94a3b8" radius={[4, 4, 0, 0]}>
+                <LabelList dataKey={statsYearBaseKey} position="top" fill="var(--text-muted)" fontSize={9} />
               </Bar>
-              <Bar dataKey={currYearKey} fill="#ef4444" radius={[4, 4, 0, 0]}>
-                <LabelList dataKey={currYearKey} position="top" fill="#ef4444" fontSize={9} fontWeight="bold" />
+              <Bar dataKey={statsYearTargetKey} fill="#ef4444" radius={[4, 4, 0, 0]}>
+                <LabelList dataKey={statsYearTargetKey} position="top" fill="#ef4444" fontSize={9} fontWeight="bold" />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -567,7 +718,7 @@ const Dashboard = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <ShieldCheck size={20} color="#10b981" />
               <h3 style={{ fontSize: '1.15rem', fontWeight: '800', margin: 0 }}>
-                Comparativo de Produtividade Policial ({prevYear} vs {currYear})
+                Comparativo de Produtividade Policial ({prodYearBase} vs {prodYearTarget})
               </h3>
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '4px 0 0 0' }}>
@@ -578,14 +729,24 @@ const Dashboard = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.75rem', fontWeight: '700' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#94a3b8', display: 'inline-block' }}></span>
-              <span style={{ color: 'var(--text-muted)' }}>Ano {prevYear}</span>
+              <span style={{ color: 'var(--text-muted)' }}>{prodYearBaseKey}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#10b981', display: 'inline-block' }}></span>
-              <span style={{ color: '#10b981' }}>Ano {currYear}</span>
+              <span style={{ color: '#10b981' }}>{prodYearTargetKey}</span>
             </div>
           </div>
         </div>
+
+        {/* Filtro de Ano para Produtividade */}
+        <YearFilterSelector
+          years={YEARS}
+          yearBase={prodYearBase}
+          yearTarget={prodYearTarget}
+          onYearBaseChange={setProdYearBase}
+          onYearTargetChange={setProdYearTarget}
+          activeColor="#10b981"
+        />
 
         {/* Filtro Múltiplo de Meses para Produtividade */}
         <MonthFilterBar
@@ -614,21 +775,21 @@ const Dashboard = () => {
               />
               <YAxis stroke="var(--text-muted)" fontSize={10} />
               <Tooltip
-                content={<ComparativeTooltip prevYearKey={prevYearKey} currYearKey={currYearKey} isInverse={false} />}
+                content={<ComparativeTooltip prevYearKey={prodYearBaseKey} currYearKey={prodYearTargetKey} isInverse={false} />}
               />
               <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '0.8rem', paddingBottom: '10px' }} />
-              <Bar dataKey={prevYearKey} fill="#94a3b8" radius={[4, 4, 0, 0]}>
+              <Bar dataKey={prodYearBaseKey} fill="#94a3b8" radius={[4, 4, 0, 0]}>
                 <LabelList
-                  dataKey={prevYearKey}
+                  dataKey={prodYearBaseKey}
                   position="top"
                   fill="var(--text-muted)"
                   fontSize={9}
                   formatter={(val) => typeof val === 'number' ? val.toFixed(2).replace(/\.00$/, '') : val}
                 />
               </Bar>
-              <Bar dataKey={currYearKey} fill="#10b981" radius={[4, 4, 0, 0]}>
+              <Bar dataKey={prodYearTargetKey} fill="#10b981" radius={[4, 4, 0, 0]}>
                 <LabelList
-                  dataKey={currYearKey}
+                  dataKey={prodYearTargetKey}
                   position="top"
                   fill="#10b981"
                   fontSize={9}
