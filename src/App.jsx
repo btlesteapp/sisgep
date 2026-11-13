@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Stats from './pages/Stats';
 import Productivity from './pages/Productivity';
+import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import ImportPdfPage from './pages/ImportPdfPage';
 import Sidebar from './components/Sidebar';
@@ -44,6 +45,10 @@ function App() {
               <Route 
                 path="/productivity" 
                 element={<ProtectedRoute><Productivity /></ProtectedRoute>} 
+              />
+              <Route 
+                path="/reports" 
+                element={<ProtectedRoute><Reports /></ProtectedRoute>} 
               />
               <Route 
                 path="/import-pdf" 
