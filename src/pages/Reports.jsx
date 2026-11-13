@@ -4,7 +4,8 @@ import {
   Printer, Download, FileText, Filter, Calendar, Shield,
   ShieldAlert, ShieldCheck, CheckCircle, AlertTriangle, TrendingDown,
   TrendingUp, Minus, Settings2, SlidersHorizontal, CheckSquare, Square,
-  RotateCcw, MapPin, Eye, FileSpreadsheet, UserCheck, ChevronDown, ChevronUp
+  RotateCcw, MapPin, Eye, FileSpreadsheet, UserCheck, ChevronDown, ChevronUp,
+  BarChart3, Table as TableIcon
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -88,6 +89,10 @@ const Reports = () => {
   const [includeTables, setIncludeTables] = useState(true);
   const [includeCharts, setIncludeCharts] = useState(true);
   const [includeNotes, setIncludeNotes] = useState(true);
+
+  // Modos de exibição por abas (Tabela Oficial, Gráfico Comparativo ou Ambos)
+  const [crimeViewMode, setCrimeViewMode] = useState('ambos'); // 'tabela' | 'grafico' | 'ambos'
+  const [prodViewMode, setProdViewMode] = useState('ambos');   // 'tabela' | 'grafico' | 'ambos'
 
   // Filtro de Anos (Padrão: Todos de 2021 a 2026)
   const [selectedYears, setSelectedYears] = useState([2021, 2022, 2023, 2024, 2025, 2026]);
@@ -491,7 +496,7 @@ const Reports = () => {
         style={{
           background: '#ffffff',
           color: '#0f172a',
-          padding: '1.4rem 2rem',
+          padding: '1.2rem 1.6rem',
           borderRadius: '12px',
           boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
           maxWidth: '1050px',
@@ -504,8 +509,8 @@ const Reports = () => {
           className="report-header"
           style={{
             borderBottom: '2px solid #0f172a',
-            paddingBottom: '0.6rem',
-            marginBottom: '0.9rem',
+            paddingBottom: '0.4rem',
+            marginBottom: '0.6rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -515,26 +520,26 @@ const Reports = () => {
             breakInside: 'avoid'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
             <img
               src="./logo.png"
               alt="Logo BTL LESTE"
-              style={{ width: '46px', height: '46px', objectFit: 'contain', flexShrink: 0 }}
+              style={{ width: '38px', height: '38px', objectFit: 'contain', flexShrink: 0 }}
             />
             <div style={{ minWidth: 0 }}>
-              <h2 style={{ fontSize: '0.78rem', fontWeight: '900', margin: 0, textTransform: 'uppercase', letterSpacing: '0.4px', color: '#0f172a', lineHeight: 1.2 }}>
+              <h2 style={{ fontSize: '0.70rem', fontWeight: '900', margin: 0, textTransform: 'uppercase', letterSpacing: '0.3px', color: '#0f172a', lineHeight: 1.15 }}>
                 POLÍCIA MILITAR DO ESTADO DO AMAZONAS
               </h2>
-              <h3 style={{ fontSize: '0.72rem', fontWeight: '800', margin: '1px 0', textTransform: 'uppercase', color: '#1e3a8a', lineHeight: 1.2 }}>
+              <h3 style={{ fontSize: '0.65rem', fontWeight: '800', margin: '1px 0', textTransform: 'uppercase', color: '#1e3a8a', lineHeight: 1.15 }}>
                 BATALHÃO LESTE - CONQUISTAR E MANTER!
               </h3>
-              <p style={{ fontSize: '0.64rem', fontWeight: '700', margin: 0, color: '#475569', textTransform: 'uppercase', lineHeight: 1.2 }}>
+              <p style={{ fontSize: '0.58rem', fontWeight: '700', margin: 0, color: '#475569', textTransform: 'uppercase', lineHeight: 1.15 }}>
                 {reportSubtitle}
               </p>
             </div>
           </div>
 
-          <div style={{ textAlign: 'right', fontSize: '0.65rem', color: '#475569', flexShrink: 0, marginLeft: '10px' }}>
+          <div style={{ textAlign: 'right', fontSize: '0.58rem', color: '#475569', flexShrink: 0, marginLeft: '8px' }}>
             <div style={{ whiteSpace: 'nowrap' }}>
               <strong>Emissão:</strong> {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
             </div>
@@ -542,10 +547,10 @@ const Reports = () => {
               <span style={{
                 background: '#e0e7ff',
                 color: '#1e3a8a',
-                padding: '2px 6px',
+                padding: '2px 5px',
                 borderRadius: '4px',
                 fontWeight: '800',
-                fontSize: '0.62rem',
+                fontSize: '0.56rem',
                 display: 'inline-block',
                 whiteSpace: 'nowrap'
               }}>
@@ -556,75 +561,75 @@ const Reports = () => {
         </header>
 
         {/* TÍTULO PRINCIPAL DO DOCUMENTO */}
-        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-          <h1 style={{ fontSize: '1.05rem', fontWeight: '900', margin: 0, textTransform: 'uppercase', letterSpacing: '0.2px', color: '#0f172a' }}>
+        <div style={{ textAlign: 'center', marginBottom: '0.6rem' }}>
+          <h1 style={{ fontSize: '0.90rem', fontWeight: '900', margin: 0, textTransform: 'uppercase', letterSpacing: '0.2px', color: '#0f172a' }}>
             {reportTitle}
           </h1>
-          <p style={{ fontSize: '0.72rem', color: '#64748b', margin: '2px 0 0 0', fontWeight: '600' }}>
+          <p style={{ fontSize: '0.62rem', color: '#64748b', margin: '2px 0 0 0', fontWeight: '600' }}>
             Série Histórica e Balanço Comparativo de Desempenho Operacional
           </p>
         </div>
 
         {/* 1. CARDS DE RESUMO EXECUTIVO (KPIS) */}
         {includeKPIs && (
-          <section style={{ marginBottom: '1.4rem' }}>
+          <section style={{ marginBottom: '0.8rem' }}>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '0.7rem'
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: '0.45rem'
             }}>
               {includeCrimes && (
                 <>
                   {/* Card 1: Total de Crimes */}
-                  <div style={{ padding: '0.55rem 0.8rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', borderLeft: '4px solid #ef4444' }}>
-                    <span style={{ fontSize: '0.62rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>
+                  <div style={{ padding: '0.35rem 0.6rem', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0', borderLeft: '3.5px solid #ef4444' }}>
+                    <span style={{ fontSize: '0.55rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.2px' }}>
                       Total de Crimes ({targetYear})
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '2px' }}>
-                      <span style={{ fontSize: '1.15rem', fontWeight: '900', color: '#0f172a' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '1px' }}>
+                      <span style={{ fontSize: '0.98rem', fontWeight: '900', color: '#0f172a' }}>
                         {crimesTotalTarget.toLocaleString('pt-BR')}
                       </span>
-                      <span style={{ fontSize: '0.65rem', fontWeight: '800', ...crimesBadge.style, padding: '1px 5px', borderRadius: '4px' }}>
+                      <span style={{ fontSize: '0.56rem', fontWeight: '800', ...crimesBadge.style, padding: '1px 5px', borderRadius: '4px' }}>
                         {crimesBadge.text}
                       </span>
                     </div>
-                    <div style={{ fontSize: '0.58rem', color: '#94a3b8', marginTop: '2px' }}>
+                    <div style={{ fontSize: '0.52rem', color: '#94a3b8', marginTop: '1px' }}>
                       vs {baseYear} ({crimesTotalBase.toLocaleString('pt-BR')} reg.)
                     </div>
                   </div>
 
                   {/* Card 2: Homicídios */}
-                  <div style={{ padding: '0.55rem 0.8rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', borderLeft: '4px solid #b91c1c' }}>
-                    <span style={{ fontSize: '0.62rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>
+                  <div style={{ padding: '0.35rem 0.6rem', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0', borderLeft: '3.5px solid #b91c1c' }}>
+                    <span style={{ fontSize: '0.55rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.2px' }}>
                       Homicídios ({targetYear})
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '2px' }}>
-                      <span style={{ fontSize: '1.15rem', fontWeight: '900', color: '#0f172a' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '1px' }}>
+                      <span style={{ fontSize: '0.98rem', fontWeight: '900', color: '#0f172a' }}>
                         {homicidiosTarget.toLocaleString('pt-BR')}
                       </span>
-                      <span style={{ fontSize: '0.65rem', fontWeight: '800', ...homicidiosBadge.style, padding: '1px 5px', borderRadius: '4px' }}>
+                      <span style={{ fontSize: '0.56rem', fontWeight: '800', ...homicidiosBadge.style, padding: '1px 5px', borderRadius: '4px' }}>
                         {homicidiosBadge.text}
                       </span>
                     </div>
-                    <div style={{ fontSize: '0.58rem', color: '#94a3b8', marginTop: '2px' }}>
+                    <div style={{ fontSize: '0.52rem', color: '#94a3b8', marginTop: '1px' }}>
                       vs {baseYear} ({homicidiosBase.toLocaleString('pt-BR')} reg.)
                     </div>
                   </div>
 
                   {/* Card 3: Roubos */}
-                  <div style={{ padding: '0.55rem 0.8rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', borderLeft: '4px solid #ea580c' }}>
-                    <span style={{ fontSize: '0.62rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>
+                  <div style={{ padding: '0.35rem 0.6rem', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0', borderLeft: '3.5px solid #ea580c' }}>
+                    <span style={{ fontSize: '0.55rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.2px' }}>
                       Roubos ({targetYear})
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '2px' }}>
-                      <span style={{ fontSize: '1.15rem', fontWeight: '900', color: '#0f172a' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '1px' }}>
+                      <span style={{ fontSize: '0.98rem', fontWeight: '900', color: '#0f172a' }}>
                         {roubosTarget.toLocaleString('pt-BR')}
                       </span>
-                      <span style={{ fontSize: '0.65rem', fontWeight: '800', ...roubosBadge.style, padding: '1px 5px', borderRadius: '4px' }}>
+                      <span style={{ fontSize: '0.56rem', fontWeight: '800', ...roubosBadge.style, padding: '1px 5px', borderRadius: '4px' }}>
                         {roubosBadge.text}
                       </span>
                     </div>
-                    <div style={{ fontSize: '0.58rem', color: '#94a3b8', marginTop: '2px' }}>
+                    <div style={{ fontSize: '0.52rem', color: '#94a3b8', marginTop: '1px' }}>
                       vs {baseYear} ({roubosBase.toLocaleString('pt-BR')} reg.)
                     </div>
                   </div>
@@ -636,26 +641,95 @@ const Reports = () => {
 
         {/* 2. MÓDULO: ÍNDICES CRIMINAIS */}
         {includeCrimes && (
-          <section style={{ marginBottom: '1.6rem', pageBreakInside: 'avoid' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '4px', marginBottom: '0.6rem' }}>
-              <ShieldAlert size={16} color="#dc2626" />
-              <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: '#0f172a', margin: 0, textTransform: 'uppercase' }}>
-                1. Índices Criminais ({rangeLabel})
-              </h3>
+          <section style={{ marginBottom: '1.2rem', pageBreakInside: 'avoid' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: '1.5px solid #e2e8f0',
+              paddingBottom: '3px',
+              marginBottom: '0.45rem',
+              flexWrap: 'wrap',
+              gap: '6px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ShieldAlert size={15} color="#dc2626" />
+                <h3 style={{ fontSize: '0.76rem', fontWeight: '800', color: '#0f172a', margin: 0, textTransform: 'uppercase' }}>
+                  1. Índices Criminais ({rangeLabel})
+                </h3>
+              </div>
+
+              {/* Abas de alternância de exibição (Tabela / Gráfico / Ambos) */}
+              <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: '2px', background: '#f1f5f9', padding: '2px', borderRadius: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setCrimeViewMode('ambos')}
+                  style={{
+                    padding: '2px 7px',
+                    fontSize: '0.60rem',
+                    fontWeight: '700',
+                    borderRadius: '4px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: crimeViewMode === 'ambos' ? '#dc2626' : 'transparent',
+                    color: crimeViewMode === 'ambos' ? '#fff' : '#64748b'
+                  }}
+                >
+                  Ambos
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCrimeViewMode('tabela')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    padding: '2px 7px',
+                    fontSize: '0.60rem',
+                    fontWeight: '700',
+                    borderRadius: '4px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: crimeViewMode === 'tabela' ? '#dc2626' : 'transparent',
+                    color: crimeViewMode === 'tabela' ? '#fff' : '#64748b'
+                  }}
+                >
+                  <TableIcon size={10} /> Tabela
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCrimeViewMode('grafico')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    padding: '2px 7px',
+                    fontSize: '0.60rem',
+                    fontWeight: '700',
+                    borderRadius: '4px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: crimeViewMode === 'grafico' ? '#dc2626' : 'transparent',
+                    color: crimeViewMode === 'grafico' ? '#fff' : '#64748b'
+                  }}
+                >
+                  <BarChart3 size={10} /> Gráfico
+                </button>
+              </div>
             </div>
 
-            {includeTables && (
-              <div style={{ overflowX: 'auto', marginBottom: includeCharts ? '0.8rem' : '0' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.72rem' }}>
+            {includeTables && (crimeViewMode === 'ambos' || crimeViewMode === 'tabela') && (
+              <div style={{ overflowX: 'auto', marginBottom: (includeCharts && (crimeViewMode === 'ambos' || crimeViewMode === 'grafico')) ? '0.6rem' : '0' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.65rem' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', color: '#0f172a', fontWeight: '800', textTransform: 'uppercase', borderBottom: '1.5px solid #cbd5e1' }}>
-                      <th style={{ padding: '6px 8px', textAlign: 'left', minWidth: '180px' }}>NATUREZA</th>
+                      <th style={{ padding: '4px 6px', textAlign: 'left', minWidth: '160px' }}>NATUREZA</th>
                       {selectedYears.map(y => (
-                        <th key={y} style={{ padding: '6px 5px', minWidth: '50px', background: y === targetYear ? '#fee2e2' : 'transparent', color: y === targetYear ? '#dc2626' : 'inherit' }}>
+                        <th key={y} style={{ padding: '4px 4px', minWidth: '45px', background: y === targetYear ? '#fee2e2' : 'transparent', color: y === targetYear ? '#dc2626' : 'inherit' }}>
                           {y}
                         </th>
                       ))}
-                      <th style={{ padding: '6px 8px', minWidth: '130px' }}>
+                      <th style={{ padding: '4px 6px', minWidth: '115px' }}>
                         COMPARATIVO % ({rangeLabel})
                       </th>
                     </tr>
@@ -669,21 +743,21 @@ const Reports = () => {
 
                       return (
                         <tr key={item} style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                          <td style={{ padding: '5px 8px', textAlign: 'left', fontWeight: '600', color: '#1e293b' }}>
+                          <td style={{ padding: '3px 6px', textAlign: 'left', fontWeight: '600', color: '#1e293b' }}>
                             {item}
                           </td>
                           {selectedYears.map(y => {
                             const val = getMonthsTotal('stats', y, item);
                             const isTarget = y === targetYear;
                             return (
-                              <td key={y} style={{ padding: '5px 5px', fontWeight: isTarget ? '800' : '500', color: isTarget ? '#dc2626' : '#475569' }}>
+                              <td key={y} style={{ padding: '3px 4px', fontWeight: isTarget ? '800' : '500', color: isTarget ? '#dc2626' : '#475569' }}>
                                 {val.toLocaleString('pt-BR')}
                               </td>
                             );
                           })}
-                          <td style={{ padding: '4px 6px' }}>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '800', ...badge.style }}>
-                              <BadgeIcon size={10} /> {badge.text}
+                          <td style={{ padding: '2px 4px' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', padding: '1px 5px', borderRadius: '3px', fontSize: '0.58rem', fontWeight: '800', ...badge.style }}>
+                              <BadgeIcon size={9} /> {badge.text}
                             </span>
                           </td>
                         </tr>
@@ -691,15 +765,15 @@ const Reports = () => {
                     })}
                     {/* Linha Total */}
                     <tr style={{ background: '#f1f5f9', fontWeight: '900', borderTop: '1.5px solid #cbd5e1' }}>
-                      <td style={{ padding: '7px 8px', textAlign: 'left', color: '#0f172a' }}>TOTAL DE OCORRÊNCIAS</td>
+                      <td style={{ padding: '5px 6px', textAlign: 'left', color: '#0f172a' }}>TOTAL DE OCORRÊNCIAS</td>
                       {selectedYears.map(y => (
-                        <td key={y} style={{ padding: '7px 5px', fontSize: '0.78rem', color: y === targetYear ? '#dc2626' : '#0f172a' }}>
+                        <td key={y} style={{ padding: '5px 4px', fontSize: '0.70rem', color: y === targetYear ? '#dc2626' : '#0f172a' }}>
                           {totalCrimesByYear[y].toLocaleString('pt-BR')}
                         </td>
                       ))}
-                      <td style={{ padding: '5px 6px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '900', ...crimesBadge.style }}>
-                          <crimesBadge.icon size={11} /> {crimesBadge.text}
+                      <td style={{ padding: '4px 5px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', padding: '2px 6px', borderRadius: '4px', fontSize: '0.62rem', fontWeight: '900', ...crimesBadge.style }}>
+                          <crimesBadge.icon size={10} /> {crimesBadge.text}
                         </span>
                       </td>
                     </tr>
@@ -708,19 +782,19 @@ const Reports = () => {
               </div>
             )}
 
-            {includeCharts && (
-              <div style={{ height: '200px', width: '100%', marginTop: '0.6rem', background: '#f8fafc', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+            {includeCharts && (crimeViewMode === 'ambos' || crimeViewMode === 'grafico') && (
+              <div style={{ height: '160px', width: '100%', marginTop: '0.4rem', background: '#f8fafc', padding: '6px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={crimeChartData} margin={{ top: 12, right: 10, left: -10, bottom: 35 }}>
+                  <BarChart data={crimeChartData} margin={{ top: 8, right: 8, left: -15, bottom: 25 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                    <XAxis dataKey="name" stroke="#64748b" fontSize={7.5} interval={0} angle={-25} textAnchor="end" height={40} />
-                    <YAxis stroke="#64748b" fontSize={8.5} />
+                    <XAxis dataKey="name" stroke="#64748b" fontSize={7} interval={0} angle={-20} textAnchor="end" height={30} />
+                    <YAxis stroke="#64748b" fontSize={7.5} />
                     <Tooltip />
-                    <Legend wrapperStyle={{ fontSize: '0.7rem', paddingTop: '4px' }} />
+                    <Legend wrapperStyle={{ fontSize: '0.62rem', paddingTop: '2px' }} />
                     {selectedYears.map((y, idx) => {
                       const isTarget = idx === selectedYears.length - 1;
                       const barColor = selectedYears.length === 2 ? (isTarget ? '#dc2626' : '#94a3b8') : (YEAR_COLORS[y] || '#dc2626');
-                      return <Bar key={y} dataKey={`Ano ${y}`} fill={barColor} radius={[3, 3, 0, 0]} />;
+                      return <Bar key={y} dataKey={`Ano ${y}`} fill={barColor} radius={[2, 2, 0, 0]} />;
                     })}
                   </BarChart>
                 </ResponsiveContainer>
@@ -731,26 +805,95 @@ const Reports = () => {
 
         {/* 3. MÓDULO: PRODUTIVIDADE POLICIAL */}
         {includeProd && (
-          <section style={{ marginBottom: '1.6rem', pageBreakInside: 'avoid' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '4px', marginBottom: '0.6rem' }}>
-              <ShieldCheck size={16} color="#059669" />
-              <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: '#0f172a', margin: 0, textTransform: 'uppercase' }}>
-                2. Produtividade Policial ({rangeLabel})
-              </h3>
+          <section style={{ marginBottom: '1.2rem', pageBreakInside: 'avoid' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: '1.5px solid #e2e8f0',
+              paddingBottom: '3px',
+              marginBottom: '0.45rem',
+              flexWrap: 'wrap',
+              gap: '6px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ShieldCheck size={15} color="#059669" />
+                <h3 style={{ fontSize: '0.76rem', fontWeight: '800', color: '#0f172a', margin: 0, textTransform: 'uppercase' }}>
+                  2. Produtividade Policial ({rangeLabel})
+                </h3>
+              </div>
+
+              {/* Abas de alternância de exibição (Tabela / Gráfico / Ambos) */}
+              <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: '2px', background: '#f1f5f9', padding: '2px', borderRadius: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setProdViewMode('ambos')}
+                  style={{
+                    padding: '2px 7px',
+                    fontSize: '0.60rem',
+                    fontWeight: '700',
+                    borderRadius: '4px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: prodViewMode === 'ambos' ? '#059669' : 'transparent',
+                    color: prodViewMode === 'ambos' ? '#fff' : '#64748b'
+                  }}
+                >
+                  Ambos
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProdViewMode('tabela')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    padding: '2px 7px',
+                    fontSize: '0.60rem',
+                    fontWeight: '700',
+                    borderRadius: '4px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: prodViewMode === 'tabela' ? '#059669' : 'transparent',
+                    color: prodViewMode === 'tabela' ? '#fff' : '#64748b'
+                  }}
+                >
+                  <TableIcon size={10} /> Tabela
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProdViewMode('grafico')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    padding: '2px 7px',
+                    fontSize: '0.60rem',
+                    fontWeight: '700',
+                    borderRadius: '4px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: prodViewMode === 'grafico' ? '#059669' : 'transparent',
+                    color: prodViewMode === 'grafico' ? '#fff' : '#64748b'
+                  }}
+                >
+                  <BarChart3 size={10} /> Gráfico
+                </button>
+              </div>
             </div>
 
-            {includeTables && (
-              <div style={{ overflowX: 'auto', marginBottom: includeCharts ? '0.8rem' : '0' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.72rem' }}>
+            {includeTables && (prodViewMode === 'ambos' || prodViewMode === 'tabela') && (
+              <div style={{ overflowX: 'auto', marginBottom: (includeCharts && (prodViewMode === 'ambos' || prodViewMode === 'grafico')) ? '0.6rem' : '0' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.65rem' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', color: '#0f172a', fontWeight: '800', textTransform: 'uppercase', borderBottom: '1.5px solid #cbd5e1' }}>
-                      <th style={{ padding: '6px 8px', textAlign: 'left', minWidth: '180px' }}>INDICADOR</th>
+                      <th style={{ padding: '4px 6px', textAlign: 'left', minWidth: '160px' }}>INDICADOR</th>
                       {selectedYears.map(y => (
-                        <th key={y} style={{ padding: '6px 5px', minWidth: '50px', background: y === targetYear ? '#d1fae5' : 'transparent', color: y === targetYear ? '#059669' : 'inherit' }}>
+                        <th key={y} style={{ padding: '4px 4px', minWidth: '45px', background: y === targetYear ? '#d1fae5' : 'transparent', color: y === targetYear ? '#059669' : 'inherit' }}>
                           {y}
                         </th>
                       ))}
-                      <th style={{ padding: '6px 8px', minWidth: '130px' }}>
+                      <th style={{ padding: '4px 6px', minWidth: '115px' }}>
                         COMPARATIVO % ({rangeLabel})
                       </th>
                     </tr>
@@ -764,21 +907,21 @@ const Reports = () => {
 
                       return (
                         <tr key={item} style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                          <td style={{ padding: '5px 8px', textAlign: 'left', fontWeight: '600', color: '#1e293b' }}>
+                          <td style={{ padding: '3px 6px', textAlign: 'left', fontWeight: '600', color: '#1e293b' }}>
                             {item}
                           </td>
                           {selectedYears.map(y => {
                             const val = getMonthsTotal('prod', y, item);
                             const isTarget = y === targetYear;
                             return (
-                              <td key={y} style={{ padding: '5px 5px', fontWeight: isTarget ? '800' : '500', color: isTarget ? '#059669' : '#475569' }}>
+                              <td key={y} style={{ padding: '3px 4px', fontWeight: isTarget ? '800' : '500', color: isTarget ? '#059669' : '#475569' }}>
                                 {typeof val === 'number' ? (val % 1 === 0 ? val.toLocaleString('pt-BR') : val.toFixed(2)) : val}
                               </td>
                             );
                           })}
-                          <td style={{ padding: '4px 6px' }}>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '800', ...badge.style }}>
-                              <BadgeIcon size={10} /> {badge.text}
+                          <td style={{ padding: '2px 4px' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', padding: '1px 5px', borderRadius: '3px', fontSize: '0.58rem', fontWeight: '800', ...badge.style }}>
+                              <BadgeIcon size={9} /> {badge.text}
                             </span>
                           </td>
                         </tr>
@@ -786,14 +929,14 @@ const Reports = () => {
                     })}
                     {/* Linha Total Produtividade */}
                     <tr style={{ background: '#f1f5f9', fontWeight: '900', borderTop: '1.5px solid #cbd5e1' }}>
-                      <td style={{ padding: '7px 8px', textAlign: 'left', color: '#0f172a' }}>TOTAL DE INTERVENÇÕES</td>
+                      <td style={{ padding: '5px 6px', textAlign: 'left', color: '#0f172a' }}>TOTAL DE INTERVENÇÕES</td>
                       {selectedYears.map(y => (
-                        <td key={y} style={{ padding: '7px 5px', fontSize: '0.78rem', color: y === targetYear ? '#059669' : '#0f172a' }}>
+                        <td key={y} style={{ padding: '5px 4px', fontSize: '0.70rem', color: y === targetYear ? '#059669' : '#0f172a' }}>
                           {totalProdByYear[y].toFixed(1).replace(/\.0$/, '')}
                         </td>
                       ))}
-                      <td style={{ padding: '5px 6px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '900', ...getComparisonBadge(totalProdByYear[baseYear], totalProdByYear[targetYear], false).style }}>
+                      <td style={{ padding: '4px 5px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', padding: '2px 6px', borderRadius: '4px', fontSize: '0.62rem', fontWeight: '900', ...getComparisonBadge(totalProdByYear[baseYear], totalProdByYear[targetYear], false).style }}>
                           {getComparisonBadge(totalProdByYear[baseYear], totalProdByYear[targetYear], false).text}
                         </span>
                       </td>
@@ -803,19 +946,19 @@ const Reports = () => {
               </div>
             )}
 
-            {includeCharts && (
-              <div style={{ height: '190px', width: '100%', marginTop: '0.6rem', background: '#f8fafc', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+            {includeCharts && (prodViewMode === 'ambos' || prodViewMode === 'grafico') && (
+              <div style={{ height: '160px', width: '100%', marginTop: '0.4rem', background: '#f8fafc', padding: '6px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={prodChartData} margin={{ top: 12, right: 10, left: -10, bottom: 25 }}>
+                  <BarChart data={prodChartData} margin={{ top: 8, right: 8, left: -15, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                    <XAxis dataKey="name" stroke="#64748b" fontSize={7.5} interval={0} angle={-15} textAnchor="end" height={30} />
-                    <YAxis stroke="#64748b" fontSize={8.5} />
+                    <XAxis dataKey="name" stroke="#64748b" fontSize={7} interval={0} angle={-15} textAnchor="end" height={25} />
+                    <YAxis stroke="#64748b" fontSize={7.5} />
                     <Tooltip />
-                    <Legend wrapperStyle={{ fontSize: '0.7rem', paddingTop: '4px' }} />
+                    <Legend wrapperStyle={{ fontSize: '0.62rem', paddingTop: '2px' }} />
                     {selectedYears.map((y, idx) => {
                       const isTarget = idx === selectedYears.length - 1;
                       const barColor = selectedYears.length === 2 ? (isTarget ? '#059669' : '#94a3b8') : (YEAR_COLORS[y] || '#059669');
-                      return <Bar key={y} dataKey={`Ano ${y}`} fill={barColor} radius={[3, 3, 0, 0]} />;
+                      return <Bar key={y} dataKey={`Ano ${y}`} fill={barColor} radius={[2, 2, 0, 0]} />;
                     })}
                   </BarChart>
                 </ResponsiveContainer>
@@ -826,26 +969,26 @@ const Reports = () => {
 
         {/* 4. MÓDULO: INDICADORES POR ZONA (RESUMO) */}
         {includeZones && (
-          <section style={{ marginBottom: '1.6rem', pageBreakInside: 'avoid' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '4px', marginBottom: '0.6rem' }}>
-              <MapPin size={16} color="#2563eb" />
-              <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: '#0f172a', margin: 0, textTransform: 'uppercase' }}>
+          <section style={{ marginBottom: '1.2rem', pageBreakInside: 'avoid' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '3px', marginBottom: '0.45rem' }}>
+              <MapPin size={15} color="#2563eb" />
+              <h3 style={{ fontSize: '0.76rem', fontWeight: '800', color: '#0f172a', margin: 0, textTransform: 'uppercase' }}>
                 3. Comparativo por Região Policial (Manaus)
               </h3>
             </div>
 
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.72rem' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.65rem' }}>
                 <thead>
                   <tr style={{ background: '#f1f5f9', color: '#0f172a', fontWeight: '800', textTransform: 'uppercase', borderBottom: '1.5px solid #cbd5e1' }}>
-                    <th style={{ padding: '6px 8px', textAlign: 'left' }}>ZONA POLICIAL</th>
-                    <th style={{ padding: '6px 6px' }}>2021</th>
-                    <th style={{ padding: '6px 6px' }}>2022</th>
-                    <th style={{ padding: '6px 6px' }}>2023</th>
-                    <th style={{ padding: '6px 6px' }}>2024</th>
-                    <th style={{ padding: '6px 6px', background: '#e0f2fe' }}>2025</th>
-                    <th style={{ padding: '6px 6px', background: '#fee2e2', color: '#dc2626', fontWeight: '900' }}>2026</th>
-                    <th style={{ padding: '6px 8px' }}>COMPARATIVO % (2025 vs 2026)</th>
+                    <th style={{ padding: '4px 6px', textAlign: 'left' }}>ZONA POLICIAL</th>
+                    <th style={{ padding: '4px 5px' }}>2021</th>
+                    <th style={{ padding: '4px 5px' }}>2022</th>
+                    <th style={{ padding: '4px 5px' }}>2023</th>
+                    <th style={{ padding: '4px 5px' }}>2024</th>
+                    <th style={{ padding: '4px 5px', background: '#e0f2fe' }}>2025</th>
+                    <th style={{ padding: '4px 5px', background: '#fee2e2', color: '#dc2626', fontWeight: '900' }}>2026</th>
+                    <th style={{ padding: '4px 6px' }}>COMPARATIVO % (2025 vs 2026)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -861,18 +1004,18 @@ const Reports = () => {
 
                     return (
                       <tr key={z.zona} style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                        <td style={{ padding: '5px 8px', textAlign: 'left', fontWeight: '700', color: '#0f172a' }}>
+                        <td style={{ padding: '3px 6px', textAlign: 'left', fontWeight: '700', color: '#0f172a' }}>
                           ZONA {z.zona}
                         </td>
-                        <td style={{ padding: '5px 6px', color: '#64748b' }}>{t2021.toLocaleString('pt-BR')}</td>
-                        <td style={{ padding: '5px 6px', color: '#64748b' }}>{t2022.toLocaleString('pt-BR')}</td>
-                        <td style={{ padding: '5px 6px', color: '#64748b' }}>{t2023.toLocaleString('pt-BR')}</td>
-                        <td style={{ padding: '5px 6px', color: '#64748b' }}>{t2024.toLocaleString('pt-BR')}</td>
-                        <td style={{ padding: '5px 6px', fontWeight: '700', color: '#0f172a', background: '#f0f9ff' }}>{t2025.toLocaleString('pt-BR')}</td>
-                        <td style={{ padding: '5px 6px', fontWeight: '900', color: '#dc2626', background: '#fff1f2' }}>{t2026.toLocaleString('pt-BR')}</td>
-                        <td style={{ padding: '4px 6px' }}>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '800', ...badge.style }}>
-                            <BadgeIcon size={10} /> {badge.text}
+                        <td style={{ padding: '3px 5px', color: '#64748b' }}>{t2021.toLocaleString('pt-BR')}</td>
+                        <td style={{ padding: '3px 5px', color: '#64748b' }}>{t2022.toLocaleString('pt-BR')}</td>
+                        <td style={{ padding: '3px 5px', color: '#64748b' }}>{t2023.toLocaleString('pt-BR')}</td>
+                        <td style={{ padding: '3px 5px', color: '#64748b' }}>{t2024.toLocaleString('pt-BR')}</td>
+                        <td style={{ padding: '3px 5px', fontWeight: '700', color: '#0f172a', background: '#f0f9ff' }}>{t2025.toLocaleString('pt-BR')}</td>
+                        <td style={{ padding: '3px 5px', fontWeight: '900', color: '#dc2626', background: '#fff1f2' }}>{t2026.toLocaleString('pt-BR')}</td>
+                        <td style={{ padding: '2px 4px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', padding: '1px 5px', borderRadius: '3px', fontSize: '0.58rem', fontWeight: '800', ...badge.style }}>
+                            <BadgeIcon size={9} /> {badge.text}
                           </span>
                         </td>
                       </tr>
@@ -887,14 +1030,14 @@ const Reports = () => {
         {/* 5. PARECER / DESPACHO DO COMANDO */}
         {includeNotes && (
           <section style={{
-            marginTop: '1.2rem',
-            padding: '0.8rem 1rem',
+            marginTop: '0.8rem',
+            padding: '0.6rem 0.8rem',
             background: '#f8fafc',
             border: '1px solid #cbd5e1',
             borderRadius: '6px',
             pageBreakInside: 'avoid'
           }}>
-            <h4 style={{ fontSize: '0.78rem', fontWeight: '800', textTransform: 'uppercase', color: '#0f172a', margin: '0 0 4px 0' }}>
+            <h4 style={{ fontSize: '0.70rem', fontWeight: '800', textTransform: 'uppercase', color: '#0f172a', margin: '0 0 3px 0' }}>
               4. Parecer Técnico-Operacional do Comando
             </h4>
             <textarea
@@ -903,12 +1046,12 @@ const Reports = () => {
               className="notes-textarea"
               style={{
                 width: '100%',
-                minHeight: '55px',
+                minHeight: '42px',
                 border: 'none',
                 background: 'transparent',
                 color: '#334155',
-                fontSize: '0.74rem',
-                lineHeight: '1.4',
+                fontSize: '0.66rem',
+                lineHeight: '1.35',
                 resize: 'vertical',
                 outline: 'none',
                 fontFamily: 'inherit'
@@ -919,19 +1062,19 @@ const Reports = () => {
 
         {/* 6. ASSINATURA E RODAPÉ OFICIAL */}
         <footer style={{
-          marginTop: '2rem',
-          paddingTop: '0.8rem',
+          marginTop: '1.2rem',
+          paddingTop: '0.5rem',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           pageBreakInside: 'avoid'
         }}>
-          <div style={{ width: '220px', borderTop: '1.5px solid #0f172a', marginBottom: '4px' }}></div>
-          <p style={{ margin: 0, fontWeight: '800', fontSize: '0.78rem', textTransform: 'uppercase', color: '#0f172a' }}>
+          <div style={{ width: '180px', borderTop: '1.5px solid #0f172a', marginBottom: '3px' }}></div>
+          <p style={{ margin: 0, fontWeight: '800', fontSize: '0.72rem', textTransform: 'uppercase', color: '#0f172a' }}>
             {officerName}
           </p>
-          <p style={{ margin: '1px 0 0 0', fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase' }}>
+          <p style={{ margin: '1px 0 0 0', fontSize: '0.58rem', color: '#64748b', textTransform: 'uppercase' }}>
             Batalhão de Policiamento de Área Leste • PMAM
           </p>
           <div style={{ fontSize: '0.58rem', color: '#94a3b8', marginTop: '1rem', textAlign: 'center' }}>
