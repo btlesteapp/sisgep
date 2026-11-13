@@ -173,15 +173,15 @@ const Reports = () => {
   const crimesTotalTarget = totalCrimesByYear[targetYear] || 0;
   const crimesBadge = getComparisonBadge(crimesTotalBase, crimesTotalTarget, true);
 
-  // Variação de Armas Apreendidas
-  const armasBase = getMonthsTotal('prod', baseYear, 'ARMAS DE FOGO APREENDIDAS');
-  const armasTarget = getMonthsTotal('prod', targetYear, 'ARMAS DE FOGO APREENDIDAS');
-  const armasBadge = getComparisonBadge(armasBase, armasTarget, false);
+  // Variação de Homicídios (Homicídio Doloso)
+  const homicidiosBase = getMonthsTotal('stats', baseYear, 'HOMICÍDIO DOLOSO');
+  const homicidiosTarget = getMonthsTotal('stats', targetYear, 'HOMICÍDIO DOLOSO');
+  const homicidiosBadge = getComparisonBadge(homicidiosBase, homicidiosTarget, true);
 
-  // Variação de Presos
-  const presosBase = getMonthsTotal('prod', baseYear, 'PRESOS');
-  const presosTarget = getMonthsTotal('prod', targetYear, 'PRESOS');
-  const presosBadge = getComparisonBadge(presosBase, presosTarget, false);
+  // Variação de Roubos
+  const roubosBase = getMonthsTotal('stats', baseYear, 'ROUBO');
+  const roubosTarget = getMonthsTotal('stats', targetYear, 'ROUBO');
+  const roubosBadge = getComparisonBadge(roubosBase, roubosTarget, true);
 
   // Exportar dados como CSV
   const handleExportCsv = () => {
@@ -491,10 +491,10 @@ const Reports = () => {
         style={{
           background: '#ffffff',
           color: '#0f172a',
-          padding: '2.5rem 3rem',
-          borderRadius: '16px',
-          boxShadow: '0 15px 40px rgba(0,0,0,0.4)',
-          maxWidth: '1100px',
+          padding: '1.4rem 2rem',
+          borderRadius: '12px',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+          maxWidth: '1050px',
           margin: '0 auto',
           position: 'relative'
         }}
@@ -503,9 +503,9 @@ const Reports = () => {
         <header
           className="report-header"
           style={{
-            borderBottom: '2.5px solid #0f172a',
-            paddingBottom: '1rem',
-            marginBottom: '1.2rem',
+            borderBottom: '2px solid #0f172a',
+            paddingBottom: '0.6rem',
+            marginBottom: '0.9rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -515,37 +515,37 @@ const Reports = () => {
             breakInside: 'avoid'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
             <img
               src="./logo.png"
               alt="Logo BTL LESTE"
-              style={{ width: '56px', height: '56px', objectFit: 'contain', flexShrink: 0 }}
+              style={{ width: '46px', height: '46px', objectFit: 'contain', flexShrink: 0 }}
             />
             <div style={{ minWidth: 0 }}>
-              <h2 style={{ fontSize: '0.88rem', fontWeight: '900', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#0f172a', lineHeight: 1.25 }}>
+              <h2 style={{ fontSize: '0.78rem', fontWeight: '900', margin: 0, textTransform: 'uppercase', letterSpacing: '0.4px', color: '#0f172a', lineHeight: 1.2 }}>
                 POLÍCIA MILITAR DO ESTADO DO AMAZONAS
               </h2>
-              <h3 style={{ fontSize: '0.78rem', fontWeight: '800', margin: '2px 0', textTransform: 'uppercase', color: '#1e3a8a', lineHeight: 1.25 }}>
+              <h3 style={{ fontSize: '0.72rem', fontWeight: '800', margin: '1px 0', textTransform: 'uppercase', color: '#1e3a8a', lineHeight: 1.2 }}>
                 BATALHÃO LESTE - CONQUISTAR E MANTER!
               </h3>
-              <p style={{ fontSize: '0.7rem', fontWeight: '700', margin: 0, color: '#475569', textTransform: 'uppercase', lineHeight: 1.25 }}>
+              <p style={{ fontSize: '0.64rem', fontWeight: '700', margin: 0, color: '#475569', textTransform: 'uppercase', lineHeight: 1.2 }}>
                 {reportSubtitle}
               </p>
             </div>
           </div>
 
-          <div style={{ textAlign: 'right', fontSize: '0.7rem', color: '#475569', flexShrink: 0, marginLeft: '12px' }}>
+          <div style={{ textAlign: 'right', fontSize: '0.65rem', color: '#475569', flexShrink: 0, marginLeft: '10px' }}>
             <div style={{ whiteSpace: 'nowrap' }}>
               <strong>Emissão:</strong> {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
             </div>
-            <div style={{ marginTop: '3px' }}>
+            <div style={{ marginTop: '2px' }}>
               <span style={{
                 background: '#e0e7ff',
                 color: '#1e3a8a',
-                padding: '2px 8px',
+                padding: '2px 6px',
                 borderRadius: '4px',
                 fontWeight: '800',
-                fontSize: '0.68rem',
+                fontSize: '0.62rem',
                 display: 'inline-block',
                 whiteSpace: 'nowrap'
               }}>
@@ -556,70 +556,77 @@ const Reports = () => {
         </header>
 
         {/* TÍTULO PRINCIPAL DO DOCUMENTO */}
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <h1 style={{ fontSize: '1.35rem', fontWeight: '900', margin: 0, textTransform: 'uppercase', letterSpacing: '-0.3px', color: '#0f172a' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <h1 style={{ fontSize: '1.05rem', fontWeight: '900', margin: 0, textTransform: 'uppercase', letterSpacing: '0.2px', color: '#0f172a' }}>
             {reportTitle}
           </h1>
-          <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '4px 0 0 0', fontWeight: '600' }}>
+          <p style={{ fontSize: '0.72rem', color: '#64748b', margin: '2px 0 0 0', fontWeight: '600' }}>
             Série Histórica e Balanço Comparativo de Desempenho Operacional
           </p>
         </div>
 
         {/* 1. CARDS DE RESUMO EXECUTIVO (KPIS) */}
         {includeKPIs && (
-          <section style={{ marginBottom: '2rem' }}>
+          <section style={{ marginBottom: '1.4rem' }}>
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '1rem'
+              gap: '0.7rem'
             }}>
               {includeCrimes && (
-                <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0', borderLeft: '5px solid #ef4444' }}>
-                  <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>
-                    Total de Crimes ({targetYear})
-                  </span>
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '4px' }}>
-                    <span style={{ fontSize: '1.5rem', fontWeight: '900', color: '#0f172a' }}>
-                      {crimesTotalTarget.toLocaleString('pt-BR')}
-                    </span>
-                    <span style={{ fontSize: '0.75rem', fontWeight: '800', ...crimesBadge.style, padding: '2px 6px', borderRadius: '4px' }}>
-                      {crimesBadge.text}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>vs {baseYear} ({crimesTotalBase.toLocaleString('pt-BR')} registros)</span>
-                </div>
-              )}
-
-              {includeProd && (
                 <>
-                  <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0', borderLeft: '5px solid #10b981' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>
-                      Armas Apreendidas ({targetYear})
+                  {/* Card 1: Total de Crimes */}
+                  <div style={{ padding: '0.55rem 0.8rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', borderLeft: '4px solid #ef4444' }}>
+                    <span style={{ fontSize: '0.62rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>
+                      Total de Crimes ({targetYear})
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '4px' }}>
-                      <span style={{ fontSize: '1.5rem', fontWeight: '900', color: '#0f172a' }}>
-                        {armasTarget.toLocaleString('pt-BR')}
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '2px' }}>
+                      <span style={{ fontSize: '1.15rem', fontWeight: '900', color: '#0f172a' }}>
+                        {crimesTotalTarget.toLocaleString('pt-BR')}
                       </span>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '800', ...armasBadge.style, padding: '2px 6px', borderRadius: '4px' }}>
-                        {armasBadge.text}
+                      <span style={{ fontSize: '0.65rem', fontWeight: '800', ...crimesBadge.style, padding: '1px 5px', borderRadius: '4px' }}>
+                        {crimesBadge.text}
                       </span>
                     </div>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>vs {baseYear} ({armasBase.toLocaleString('pt-BR')} armas)</span>
+                    <div style={{ fontSize: '0.58rem', color: '#94a3b8', marginTop: '2px' }}>
+                      vs {baseYear} ({crimesTotalBase.toLocaleString('pt-BR')} reg.)
+                    </div>
                   </div>
 
-                  <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0', borderLeft: '5px solid #3b82f6' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>
-                      Presos / Detidos ({targetYear})
+                  {/* Card 2: Homicídios */}
+                  <div style={{ padding: '0.55rem 0.8rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', borderLeft: '4px solid #b91c1c' }}>
+                    <span style={{ fontSize: '0.62rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>
+                      Homicídios ({targetYear})
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '4px' }}>
-                      <span style={{ fontSize: '1.5rem', fontWeight: '900', color: '#0f172a' }}>
-                        {presosTarget.toLocaleString('pt-BR')}
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '2px' }}>
+                      <span style={{ fontSize: '1.15rem', fontWeight: '900', color: '#0f172a' }}>
+                        {homicidiosTarget.toLocaleString('pt-BR')}
                       </span>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '800', ...presosBadge.style, padding: '2px 6px', borderRadius: '4px' }}>
-                        {presosBadge.text}
+                      <span style={{ fontSize: '0.65rem', fontWeight: '800', ...homicidiosBadge.style, padding: '1px 5px', borderRadius: '4px' }}>
+                        {homicidiosBadge.text}
                       </span>
                     </div>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>vs {baseYear} ({presosBase.toLocaleString('pt-BR')} detidos)</span>
+                    <div style={{ fontSize: '0.58rem', color: '#94a3b8', marginTop: '2px' }}>
+                      vs {baseYear} ({homicidiosBase.toLocaleString('pt-BR')} reg.)
+                    </div>
+                  </div>
+
+                  {/* Card 3: Roubos */}
+                  <div style={{ padding: '0.55rem 0.8rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', borderLeft: '4px solid #ea580c' }}>
+                    <span style={{ fontSize: '0.62rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>
+                      Roubos ({targetYear})
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '2px' }}>
+                      <span style={{ fontSize: '1.15rem', fontWeight: '900', color: '#0f172a' }}>
+                        {roubosTarget.toLocaleString('pt-BR')}
+                      </span>
+                      <span style={{ fontSize: '0.65rem', fontWeight: '800', ...roubosBadge.style, padding: '1px 5px', borderRadius: '4px' }}>
+                        {roubosBadge.text}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.58rem', color: '#94a3b8', marginTop: '2px' }}>
+                      vs {baseYear} ({roubosBase.toLocaleString('pt-BR')} reg.)
+                    </div>
                   </div>
                 </>
               )}
@@ -629,26 +636,26 @@ const Reports = () => {
 
         {/* 2. MÓDULO: ÍNDICES CRIMINAIS */}
         {includeCrimes && (
-          <section style={{ marginBottom: '2.5rem', pageBreakInside: 'avoid' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '2px solid #e2e8f0', paddingBottom: '6px', marginBottom: '1rem' }}>
-              <ShieldAlert size={18} color="#dc2626" />
-              <h3 style={{ fontSize: '1rem', fontWeight: '800', color: '#0f172a', margin: 0, textTransform: 'uppercase' }}>
+          <section style={{ marginBottom: '1.6rem', pageBreakInside: 'avoid' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '4px', marginBottom: '0.6rem' }}>
+              <ShieldAlert size={16} color="#dc2626" />
+              <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: '#0f172a', margin: 0, textTransform: 'uppercase' }}>
                 1. Índices Criminais ({rangeLabel})
               </h3>
             </div>
 
             {includeTables && (
-              <div style={{ overflowX: 'auto', marginBottom: includeCharts ? '1.5rem' : '0' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem' }}>
+              <div style={{ overflowX: 'auto', marginBottom: includeCharts ? '0.8rem' : '0' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.72rem' }}>
                   <thead>
-                    <tr style={{ background: '#f1f5f9', color: '#0f172a', fontWeight: '800', textTransform: 'uppercase', borderBottom: '2px solid #cbd5e1' }}>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', minWidth: '220px' }}>NATUREZA</th>
+                    <tr style={{ background: '#f1f5f9', color: '#0f172a', fontWeight: '800', textTransform: 'uppercase', borderBottom: '1.5px solid #cbd5e1' }}>
+                      <th style={{ padding: '6px 8px', textAlign: 'left', minWidth: '180px' }}>NATUREZA</th>
                       {selectedYears.map(y => (
-                        <th key={y} style={{ padding: '8px 6px', minWidth: '60px', background: y === targetYear ? '#fee2e2' : 'transparent', color: y === targetYear ? '#dc2626' : 'inherit' }}>
+                        <th key={y} style={{ padding: '6px 5px', minWidth: '50px', background: y === targetYear ? '#fee2e2' : 'transparent', color: y === targetYear ? '#dc2626' : 'inherit' }}>
                           {y}
                         </th>
                       ))}
-                      <th style={{ padding: '8px 12px', minWidth: '150px' }}>
+                      <th style={{ padding: '6px 8px', minWidth: '130px' }}>
                         COMPARATIVO % ({rangeLabel})
                       </th>
                     </tr>
@@ -662,37 +669,37 @@ const Reports = () => {
 
                       return (
                         <tr key={item} style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                          <td style={{ padding: '8px 12px', textAlign: 'left', fontWeight: '600', color: '#1e293b' }}>
+                          <td style={{ padding: '5px 8px', textAlign: 'left', fontWeight: '600', color: '#1e293b' }}>
                             {item}
                           </td>
                           {selectedYears.map(y => {
                             const val = getMonthsTotal('stats', y, item);
                             const isTarget = y === targetYear;
                             return (
-                              <td key={y} style={{ padding: '8px 6px', fontWeight: isTarget ? '800' : '500', color: isTarget ? '#dc2626' : '#475569' }}>
+                              <td key={y} style={{ padding: '5px 5px', fontWeight: isTarget ? '800' : '500', color: isTarget ? '#dc2626' : '#475569' }}>
                                 {val.toLocaleString('pt-BR')}
                               </td>
                             );
                           })}
-                          <td style={{ padding: '6px 10px' }}>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '800', ...badge.style }}>
-                              <BadgeIcon size={11} /> {badge.text}
+                          <td style={{ padding: '4px 6px' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '800', ...badge.style }}>
+                              <BadgeIcon size={10} /> {badge.text}
                             </span>
                           </td>
                         </tr>
                       );
                     })}
                     {/* Linha Total */}
-                    <tr style={{ background: '#f1f5f9', fontWeight: '900', borderTop: '2px solid #cbd5e1' }}>
-                      <td style={{ padding: '10px 12px', textAlign: 'left', color: '#0f172a' }}>TOTAL DE OCORRÊNCIAS</td>
+                    <tr style={{ background: '#f1f5f9', fontWeight: '900', borderTop: '1.5px solid #cbd5e1' }}>
+                      <td style={{ padding: '7px 8px', textAlign: 'left', color: '#0f172a' }}>TOTAL DE OCORRÊNCIAS</td>
                       {selectedYears.map(y => (
-                        <td key={y} style={{ padding: '10px 6px', fontSize: '0.85rem', color: y === targetYear ? '#dc2626' : '#0f172a' }}>
+                        <td key={y} style={{ padding: '7px 5px', fontSize: '0.78rem', color: y === targetYear ? '#dc2626' : '#0f172a' }}>
                           {totalCrimesByYear[y].toLocaleString('pt-BR')}
                         </td>
                       ))}
-                      <td style={{ padding: '8px 10px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '4px 10px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '900', ...crimesBadge.style }}>
-                          <crimesBadge.icon size={12} /> {crimesBadge.text}
+                      <td style={{ padding: '5px 6px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '900', ...crimesBadge.style }}>
+                          <crimesBadge.icon size={11} /> {crimesBadge.text}
                         </span>
                       </td>
                     </tr>
@@ -702,14 +709,14 @@ const Reports = () => {
             )}
 
             {includeCharts && (
-              <div style={{ height: '240px', width: '100%', marginTop: '1rem', background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <div style={{ height: '200px', width: '100%', marginTop: '0.6rem', background: '#f8fafc', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={crimeChartData} margin={{ top: 15, right: 10, left: -10, bottom: 40 }}>
+                  <BarChart data={crimeChartData} margin={{ top: 12, right: 10, left: -10, bottom: 35 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                    <XAxis dataKey="name" stroke="#64748b" fontSize={8} interval={0} angle={-25} textAnchor="end" height={45} />
-                    <YAxis stroke="#64748b" fontSize={9} />
+                    <XAxis dataKey="name" stroke="#64748b" fontSize={7.5} interval={0} angle={-25} textAnchor="end" height={40} />
+                    <YAxis stroke="#64748b" fontSize={8.5} />
                     <Tooltip />
-                    <Legend wrapperStyle={{ fontSize: '0.75rem' }} />
+                    <Legend wrapperStyle={{ fontSize: '0.7rem', paddingTop: '4px' }} />
                     {selectedYears.map((y, idx) => {
                       const isTarget = idx === selectedYears.length - 1;
                       const barColor = selectedYears.length === 2 ? (isTarget ? '#dc2626' : '#94a3b8') : (YEAR_COLORS[y] || '#dc2626');
@@ -724,26 +731,26 @@ const Reports = () => {
 
         {/* 3. MÓDULO: PRODUTIVIDADE POLICIAL */}
         {includeProd && (
-          <section style={{ marginBottom: '2.5rem', pageBreakInside: 'avoid' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '2px solid #e2e8f0', paddingBottom: '6px', marginBottom: '1rem' }}>
-              <ShieldCheck size={18} color="#059669" />
-              <h3 style={{ fontSize: '1rem', fontWeight: '800', color: '#0f172a', margin: 0, textTransform: 'uppercase' }}>
+          <section style={{ marginBottom: '1.6rem', pageBreakInside: 'avoid' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '4px', marginBottom: '0.6rem' }}>
+              <ShieldCheck size={16} color="#059669" />
+              <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: '#0f172a', margin: 0, textTransform: 'uppercase' }}>
                 2. Produtividade Policial ({rangeLabel})
               </h3>
             </div>
 
             {includeTables && (
-              <div style={{ overflowX: 'auto', marginBottom: includeCharts ? '1.5rem' : '0' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem' }}>
+              <div style={{ overflowX: 'auto', marginBottom: includeCharts ? '0.8rem' : '0' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.72rem' }}>
                   <thead>
-                    <tr style={{ background: '#f1f5f9', color: '#0f172a', fontWeight: '800', textTransform: 'uppercase', borderBottom: '2px solid #cbd5e1' }}>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', minWidth: '220px' }}>INDICADOR</th>
+                    <tr style={{ background: '#f1f5f9', color: '#0f172a', fontWeight: '800', textTransform: 'uppercase', borderBottom: '1.5px solid #cbd5e1' }}>
+                      <th style={{ padding: '6px 8px', textAlign: 'left', minWidth: '180px' }}>INDICADOR</th>
                       {selectedYears.map(y => (
-                        <th key={y} style={{ padding: '8px 6px', minWidth: '60px', background: y === targetYear ? '#d1fae5' : 'transparent', color: y === targetYear ? '#059669' : 'inherit' }}>
+                        <th key={y} style={{ padding: '6px 5px', minWidth: '50px', background: y === targetYear ? '#d1fae5' : 'transparent', color: y === targetYear ? '#059669' : 'inherit' }}>
                           {y}
                         </th>
                       ))}
-                      <th style={{ padding: '8px 12px', minWidth: '150px' }}>
+                      <th style={{ padding: '6px 8px', minWidth: '130px' }}>
                         COMPARATIVO % ({rangeLabel})
                       </th>
                     </tr>
@@ -757,37 +764,37 @@ const Reports = () => {
 
                       return (
                         <tr key={item} style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                          <td style={{ padding: '8px 12px', textAlign: 'left', fontWeight: '600', color: '#1e293b' }}>
+                          <td style={{ padding: '5px 8px', textAlign: 'left', fontWeight: '600', color: '#1e293b' }}>
                             {item}
                           </td>
                           {selectedYears.map(y => {
                             const val = getMonthsTotal('prod', y, item);
                             const isTarget = y === targetYear;
                             return (
-                              <td key={y} style={{ padding: '8px 6px', fontWeight: isTarget ? '800' : '500', color: isTarget ? '#059669' : '#475569' }}>
+                              <td key={y} style={{ padding: '5px 5px', fontWeight: isTarget ? '800' : '500', color: isTarget ? '#059669' : '#475569' }}>
                                 {typeof val === 'number' ? (val % 1 === 0 ? val.toLocaleString('pt-BR') : val.toFixed(2)) : val}
                               </td>
                             );
                           })}
-                          <td style={{ padding: '6px 10px' }}>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '800', ...badge.style }}>
-                              <BadgeIcon size={11} /> {badge.text}
+                          <td style={{ padding: '4px 6px' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '800', ...badge.style }}>
+                              <BadgeIcon size={10} /> {badge.text}
                             </span>
                           </td>
                         </tr>
                       );
                     })}
                     {/* Linha Total Produtividade */}
-                    <tr style={{ background: '#f1f5f9', fontWeight: '900', borderTop: '2px solid #cbd5e1' }}>
-                      <td style={{ padding: '10px 12px', textAlign: 'left', color: '#0f172a' }}>TOTAL DE INTERVENÇÕES</td>
+                    <tr style={{ background: '#f1f5f9', fontWeight: '900', borderTop: '1.5px solid #cbd5e1' }}>
+                      <td style={{ padding: '7px 8px', textAlign: 'left', color: '#0f172a' }}>TOTAL DE INTERVENÇÕES</td>
                       {selectedYears.map(y => (
-                        <td key={y} style={{ padding: '10px 6px', fontSize: '0.85rem', color: y === targetYear ? '#059669' : '#0f172a' }}>
+                        <td key={y} style={{ padding: '7px 5px', fontSize: '0.78rem', color: y === targetYear ? '#059669' : '#0f172a' }}>
                           {totalProdByYear[y].toFixed(1).replace(/\.0$/, '')}
                         </td>
                       ))}
-                      <td style={{ padding: '8px 10px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '4px 10px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '900', ...armasBadge.style }}>
-                          <armasBadge.icon size={12} /> {armasBadge.text}
+                      <td style={{ padding: '5px 6px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '900', ...getComparisonBadge(totalProdByYear[baseYear], totalProdByYear[targetYear], false).style }}>
+                          {getComparisonBadge(totalProdByYear[baseYear], totalProdByYear[targetYear], false).text}
                         </span>
                       </td>
                     </tr>
@@ -797,14 +804,14 @@ const Reports = () => {
             )}
 
             {includeCharts && (
-              <div style={{ height: '230px', width: '100%', marginTop: '1rem', background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <div style={{ height: '190px', width: '100%', marginTop: '0.6rem', background: '#f8fafc', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={prodChartData} margin={{ top: 15, right: 10, left: -10, bottom: 30 }}>
+                  <BarChart data={prodChartData} margin={{ top: 12, right: 10, left: -10, bottom: 25 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                    <XAxis dataKey="name" stroke="#64748b" fontSize={8} interval={0} angle={-15} textAnchor="end" height={35} />
-                    <YAxis stroke="#64748b" fontSize={9} />
+                    <XAxis dataKey="name" stroke="#64748b" fontSize={7.5} interval={0} angle={-15} textAnchor="end" height={30} />
+                    <YAxis stroke="#64748b" fontSize={8.5} />
                     <Tooltip />
-                    <Legend wrapperStyle={{ fontSize: '0.75rem' }} />
+                    <Legend wrapperStyle={{ fontSize: '0.7rem', paddingTop: '4px' }} />
                     {selectedYears.map((y, idx) => {
                       const isTarget = idx === selectedYears.length - 1;
                       const barColor = selectedYears.length === 2 ? (isTarget ? '#059669' : '#94a3b8') : (YEAR_COLORS[y] || '#059669');
@@ -819,26 +826,26 @@ const Reports = () => {
 
         {/* 4. MÓDULO: INDICADORES POR ZONA (RESUMO) */}
         {includeZones && (
-          <section style={{ marginBottom: '2.5rem', pageBreakInside: 'avoid' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '2px solid #e2e8f0', paddingBottom: '6px', marginBottom: '1rem' }}>
-              <MapPin size={18} color="#2563eb" />
-              <h3 style={{ fontSize: '1rem', fontWeight: '800', color: '#0f172a', margin: 0, textTransform: 'uppercase' }}>
+          <section style={{ marginBottom: '1.6rem', pageBreakInside: 'avoid' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '4px', marginBottom: '0.6rem' }}>
+              <MapPin size={16} color="#2563eb" />
+              <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: '#0f172a', margin: 0, textTransform: 'uppercase' }}>
                 3. Comparativo por Região Policial (Manaus)
               </h3>
             </div>
 
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.72rem' }}>
                 <thead>
-                  <tr style={{ background: '#f1f5f9', color: '#0f172a', fontWeight: '800', textTransform: 'uppercase', borderBottom: '2px solid #cbd5e1' }}>
-                    <th style={{ padding: '8px 12px', textAlign: 'left' }}>ZONA POLICIAL</th>
-                    <th style={{ padding: '8px 10px' }}>2021</th>
-                    <th style={{ padding: '8px 10px' }}>2022</th>
-                    <th style={{ padding: '8px 10px' }}>2023</th>
-                    <th style={{ padding: '8px 10px' }}>2024</th>
-                    <th style={{ padding: '8px 10px', background: '#e0f2fe' }}>2025</th>
-                    <th style={{ padding: '8px 10px', background: '#fee2e2', color: '#dc2626', fontWeight: '900' }}>2026</th>
-                    <th style={{ padding: '8px 12px' }}>COMPARATIVO % (2025 vs 2026)</th>
+                  <tr style={{ background: '#f1f5f9', color: '#0f172a', fontWeight: '800', textTransform: 'uppercase', borderBottom: '1.5px solid #cbd5e1' }}>
+                    <th style={{ padding: '6px 8px', textAlign: 'left' }}>ZONA POLICIAL</th>
+                    <th style={{ padding: '6px 6px' }}>2021</th>
+                    <th style={{ padding: '6px 6px' }}>2022</th>
+                    <th style={{ padding: '6px 6px' }}>2023</th>
+                    <th style={{ padding: '6px 6px' }}>2024</th>
+                    <th style={{ padding: '6px 6px', background: '#e0f2fe' }}>2025</th>
+                    <th style={{ padding: '6px 6px', background: '#fee2e2', color: '#dc2626', fontWeight: '900' }}>2026</th>
+                    <th style={{ padding: '6px 8px' }}>COMPARATIVO % (2025 vs 2026)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -854,18 +861,18 @@ const Reports = () => {
 
                     return (
                       <tr key={z.zona} style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                        <td style={{ padding: '8px 12px', textAlign: 'left', fontWeight: '700', color: '#0f172a' }}>
+                        <td style={{ padding: '5px 8px', textAlign: 'left', fontWeight: '700', color: '#0f172a' }}>
                           ZONA {z.zona}
                         </td>
-                        <td style={{ padding: '8px 10px', color: '#64748b' }}>{t2021.toLocaleString('pt-BR')}</td>
-                        <td style={{ padding: '8px 10px', color: '#64748b' }}>{t2022.toLocaleString('pt-BR')}</td>
-                        <td style={{ padding: '8px 10px', color: '#64748b' }}>{t2023.toLocaleString('pt-BR')}</td>
-                        <td style={{ padding: '8px 10px', color: '#64748b' }}>{t2024.toLocaleString('pt-BR')}</td>
-                        <td style={{ padding: '8px 10px', fontWeight: '700', color: '#0f172a', background: '#f0f9ff' }}>{t2025.toLocaleString('pt-BR')}</td>
-                        <td style={{ padding: '8px 10px', fontWeight: '900', color: '#dc2626', background: '#fff1f2' }}>{t2026.toLocaleString('pt-BR')}</td>
-                        <td style={{ padding: '6px 10px' }}>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '800', ...badge.style }}>
-                            <BadgeIcon size={11} /> {badge.text}
+                        <td style={{ padding: '5px 6px', color: '#64748b' }}>{t2021.toLocaleString('pt-BR')}</td>
+                        <td style={{ padding: '5px 6px', color: '#64748b' }}>{t2022.toLocaleString('pt-BR')}</td>
+                        <td style={{ padding: '5px 6px', color: '#64748b' }}>{t2023.toLocaleString('pt-BR')}</td>
+                        <td style={{ padding: '5px 6px', color: '#64748b' }}>{t2024.toLocaleString('pt-BR')}</td>
+                        <td style={{ padding: '5px 6px', fontWeight: '700', color: '#0f172a', background: '#f0f9ff' }}>{t2025.toLocaleString('pt-BR')}</td>
+                        <td style={{ padding: '5px 6px', fontWeight: '900', color: '#dc2626', background: '#fff1f2' }}>{t2026.toLocaleString('pt-BR')}</td>
+                        <td style={{ padding: '4px 6px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '800', ...badge.style }}>
+                            <BadgeIcon size={10} /> {badge.text}
                           </span>
                         </td>
                       </tr>
@@ -880,14 +887,14 @@ const Reports = () => {
         {/* 5. PARECER / DESPACHO DO COMANDO */}
         {includeNotes && (
           <section style={{
-            marginTop: '2rem',
-            padding: '1.2rem',
+            marginTop: '1.2rem',
+            padding: '0.8rem 1rem',
             background: '#f8fafc',
             border: '1px solid #cbd5e1',
-            borderRadius: '8px',
+            borderRadius: '6px',
             pageBreakInside: 'avoid'
           }}>
-            <h4 style={{ fontSize: '0.85rem', fontWeight: '800', textTransform: 'uppercase', color: '#0f172a', margin: '0 0 6px 0' }}>
+            <h4 style={{ fontSize: '0.78rem', fontWeight: '800', textTransform: 'uppercase', color: '#0f172a', margin: '0 0 4px 0' }}>
               4. Parecer Técnico-Operacional do Comando
             </h4>
             <textarea
@@ -896,12 +903,12 @@ const Reports = () => {
               className="notes-textarea"
               style={{
                 width: '100%',
-                minHeight: '70px',
+                minHeight: '55px',
                 border: 'none',
                 background: 'transparent',
                 color: '#334155',
-                fontSize: '0.8rem',
-                lineHeight: '1.5',
+                fontSize: '0.74rem',
+                lineHeight: '1.4',
                 resize: 'vertical',
                 outline: 'none',
                 fontFamily: 'inherit'
@@ -912,22 +919,22 @@ const Reports = () => {
 
         {/* 6. ASSINATURA E RODAPÉ OFICIAL */}
         <footer style={{
-          marginTop: '3.5rem',
-          paddingTop: '1rem',
+          marginTop: '2rem',
+          paddingTop: '0.8rem',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           pageBreakInside: 'avoid'
         }}>
-          <div style={{ width: '280px', borderTop: '1.5px solid #0f172a', marginBottom: '6px' }}></div>
-          <p style={{ margin: 0, fontWeight: '800', fontSize: '0.85rem', textTransform: 'uppercase', color: '#0f172a' }}>
+          <div style={{ width: '220px', borderTop: '1.5px solid #0f172a', marginBottom: '4px' }}></div>
+          <p style={{ margin: 0, fontWeight: '800', fontSize: '0.78rem', textTransform: 'uppercase', color: '#0f172a' }}>
             {officerName}
           </p>
-          <p style={{ margin: '2px 0 0 0', fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase' }}>
+          <p style={{ margin: '1px 0 0 0', fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase' }}>
             Batalhão de Policiamento de Área Leste • PMAM
           </p>
-          <div style={{ fontSize: '0.62rem', color: '#94a3b8', marginTop: '1.5rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '0.58rem', color: '#94a3b8', marginTop: '1rem', textAlign: 'center' }}>
             Documento gerado eletronicamente pelo SISGEP-LESTE • Batalhão Leste • Conquistar e Manter!
           </div>
         </footer>
