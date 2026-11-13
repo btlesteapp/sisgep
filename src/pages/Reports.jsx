@@ -1,12 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useData } from '../context/DataContext';
 import {
   Printer, Download, FileText, Filter, Calendar, Shield,
   ShieldAlert, ShieldCheck, CheckCircle, AlertTriangle, TrendingDown,
   TrendingUp, Minus, Settings2, SlidersHorizontal, CheckSquare, Square,
   RotateCcw, MapPin, Eye, FileSpreadsheet, UserCheck, ChevronDown, ChevronUp,
-  BarChart3, Table as TableIcon
+  BarChart3, Table as TableIcon, FileDown, Loader2, Image as ImageIcon
 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, LabelList
@@ -226,6 +228,153 @@ const Reports = () => {
     document.body.removeChild(link);
   };
 
+  const reportRef = useRef(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [progressMessage, setProgressMessage] = useState('');
+
+  // Captura do relatório para PDF/Imagem com adaptação para telas mobile
+  const generateReportCanvas = async () => {
+    if (!reportRef.current) throw new Error("Documento não encontrado");
+
+    if (document.fonts) {
+      await document.fonts.ready;
+    }
+
+    const canvas = await html2canvas(reportRef.current, {
+      scale: 2, // Resolução 2x para máxima nitidez
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      windowWidth: 1050, // Garante proporção de A4 desktop mesmo se estiver no celular
+      onclone: (clonedDoc) => {
+        const clonedReport = clonedDoc.querySelector('.report-document');
+        if (clonedReport) {
+          clonedReport.style.width = '1050px';
+          clonedReport.style.minWidth = '1050px';
+          clonedReport.style.maxWidth = '1050px';
+          clonedReport.style.margin = '0 auto';
+          clonedReport.style.padding = '20px 28px';
+          clonedReport.style.boxSizing = 'border-box';
+          clonedReport.style.boxShadow = 'none';
+          clonedReport.style.borderRadius = '0';
+        }
+
+        // Garante que tabelas não fiquem cortadas por overflow horizontal
+        const scrollContainers = clonedDoc.querySelectorAll('.report-document div');
+        scrollContainers.forEach(container => {
+          if (container.style && (container.style.overflowX === 'auto' || container.style.overflow === 'auto')) {
+            container.style.overflow = 'visible';
+            container.style.overflowX = 'visible';
+            container.style.width = '100%';
+          }
+        });
+
+        // Oculta abas e controles no-print no documento gerado
+        const noPrintEls = clonedDoc.querySelectorAll('.no-print');
+        noPrintEls.forEach(el => {
+          el.style.display = 'none';
+        });
+
+        // Substitui textareas por divs para que todo o parecer apareça sem scrollbar
+        const textareas = clonedDoc.querySelectorAll('.report-document textarea');
+        textareas.forEach(ta => {
+          const div = clonedDoc.createElement('div');
+          div.style.cssText = ta.style.cssText;
+          div.style.whiteSpace = 'pre-wrap';
+          div.style.wordBreak = 'break-word';
+          div.style.border = 'none';
+          div.style.outline = 'none';
+          div.innerText = ta.value;
+          ta.parentNode.replaceChild(div, ta);
+        });
+      }
+    });
+
+    return canvas;
+  };
+
+  // Gerador direto de PDF (compatível com mobile e desktop)
+  const handleDownloadPdf = async () => {
+    if (!reportRef.current || isGeneratingPdf) return;
+    setIsGeneratingPdf(true);
+    setProgressMessage('Preparando...');
+
+    try {
+      setProgressMessage('Renderizando páginas...');
+      const canvas = await generateReportCanvas();
+
+      setProgressMessage('Montando PDF A4...');
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Primeira página
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageHeight;
+
+      // Páginas subsequentes se ultrapassar 1 folha A4
+      while (heightLeft > 0) {
+        position -= pageHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pageHeight;
+      }
+
+      const safeTitle = (reportTitle || 'Relatorio_BTL_LESTE').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const fileName = `${safeTitle}_${Date.now()}.pdf`;
+
+      // Salva o PDF diretamente no aparelho
+      pdf.save(fileName);
+      setProgressMessage('Concluído!');
+    } catch (err) {
+      console.error('Erro ao gerar PDF:', err);
+      alert('Não foi possível gerar o PDF diretamente. Tentando abrir caixa de diálogo de impressão...');
+      window.print();
+    } finally {
+      setTimeout(() => {
+        setIsGeneratingPdf(false);
+        setProgressMessage('');
+      }, 1500);
+    }
+  };
+
+  // Gerador de Imagem PNG em alta resolução
+  const handleDownloadImage = async () => {
+    if (!reportRef.current || isGeneratingImage) return;
+    setIsGeneratingImage(true);
+    setProgressMessage('Gerando imagem...');
+
+    try {
+      const canvas = await generateReportCanvas();
+      const image = canvas.toDataURL('image/png', 1.0);
+      const link = document.createElement('a');
+      link.href = image;
+      const safeTitle = (reportTitle || 'Relatorio_BTL_LESTE').replace(/[^a-zA-Z0-9_-]/g, '_');
+      link.download = `${safeTitle}_${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setProgressMessage('Imagem salva!');
+    } catch (err) {
+      console.error('Erro ao gerar imagem:', err);
+      alert('Erro ao gerar imagem do relatório.');
+    } finally {
+      setTimeout(() => {
+        setIsGeneratingImage(false);
+        setProgressMessage('');
+      }, 1500);
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -294,35 +443,87 @@ const Reports = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                padding: '8px 14px',
+                padding: '8px 12px',
                 borderRadius: '8px',
-                fontSize: '0.8rem',
+                fontSize: '0.78rem',
                 fontWeight: '700',
                 cursor: 'pointer',
                 background: 'var(--surface-color)',
                 border: '1px solid var(--surface-border)',
                 color: 'var(--text-color)'
               }}
+              title="Exportar planilha CSV com todos os dados"
             >
-              <Download size={15} /> Exportar CSV
+              <Download size={14} /> Exportar CSV
             </button>
 
             <button
-              onClick={handlePrint}
+              onClick={handleDownloadPdf}
+              disabled={isGeneratingPdf}
               className="btn-primary"
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '8px 18px',
+                gap: '6px',
+                padding: '8px 16px',
                 borderRadius: '8px',
-                fontSize: '0.85rem',
+                fontSize: '0.82rem',
                 fontWeight: '800',
-                cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)'
+                cursor: isGeneratingPdf ? 'wait' : 'pointer',
+                background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)',
+                color: '#fff',
+                border: 'none',
+                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
+                whiteSpace: 'nowrap'
               }}
+              title="Baixar arquivo PDF oficial A4 diretamente no aparelho"
             >
-              <Printer size={16} /> Imprimir / Salvar PDF
+              {isGeneratingPdf ? <Loader2 size={15} className="animate-spin" /> : <FileDown size={15} />}
+              {isGeneratingPdf ? (progressMessage || 'Gerando PDF...') : 'Baixar PDF'}
+            </button>
+
+            <button
+              onClick={handleDownloadImage}
+              disabled={isGeneratingImage || isGeneratingPdf}
+              className="btn-secondary"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                fontSize: '0.78rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                background: 'var(--surface-color)',
+                border: '1px solid var(--surface-border)',
+                color: 'var(--text-color)',
+                whiteSpace: 'nowrap'
+              }}
+              title="Salvar como imagem PNG para WhatsApp ou visualização rápida"
+            >
+              <ImageIcon size={14} /> Baixar Imagem (PNG)
+            </button>
+
+            <button
+              onClick={handlePrint}
+              className="btn-secondary"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                fontSize: '0.78rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                background: 'var(--surface-color)',
+                border: '1px solid var(--surface-border)',
+                color: 'var(--text-color)'
+              }}
+              title="Abrir caixa de diálogo do navegador para impressão"
+            >
+              <Printer size={14} /> Imprimir
             </button>
           </div>
         </div>
@@ -492,6 +693,7 @@ const Reports = () => {
 
       {/* DOCUMENTO OFICIAL PARA IMPRESSÃO E VISUALIZAÇÃO (FOLHA TIMBRADA) */}
       <div
+        ref={reportRef}
         className="report-document"
         style={{
           background: '#ffffff',
@@ -1083,9 +1285,96 @@ const Reports = () => {
         </footer>
       </div>
 
-      {/* ESTILOS DE IMPRESSÃO (@media print) */}
+      {/* BARRA DE AÇÕES INFERIOR (ACESSO RÁPIDO NO MOBILE APÓS ROLAR O RELATÓRIO) */}
+      <div
+        className="no-print"
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '8px',
+          marginTop: '1.2rem',
+          flexWrap: 'wrap'
+        }}
+      >
+        <button
+          onClick={handleDownloadPdf}
+          disabled={isGeneratingPdf}
+          className="btn-primary"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 20px',
+            borderRadius: '10px',
+            fontSize: '0.85rem',
+            fontWeight: '800',
+            cursor: isGeneratingPdf ? 'wait' : 'pointer',
+            background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)',
+            color: '#fff',
+            border: 'none',
+            boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)'
+          }}
+          title="Baixar arquivo PDF oficial A4 diretamente no aparelho"
+        >
+          {isGeneratingPdf ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+          {isGeneratingPdf ? (progressMessage || 'Gerando PDF...') : 'Baixar Relatório em PDF'}
+        </button>
+
+        <button
+          onClick={handleDownloadImage}
+          disabled={isGeneratingImage || isGeneratingPdf}
+          className="btn-secondary"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '10px 16px',
+            borderRadius: '10px',
+            fontSize: '0.82rem',
+            fontWeight: '700',
+            cursor: 'pointer',
+            background: 'var(--surface-color)',
+            border: '1px solid var(--surface-border)',
+            color: 'var(--text-color)'
+          }}
+          title="Salvar como imagem PNG para WhatsApp ou fotos"
+        >
+          <ImageIcon size={15} /> Baixar Imagem (PNG)
+        </button>
+
+        <button
+          onClick={handlePrint}
+          className="btn-secondary"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '10px 16px',
+            borderRadius: '10px',
+            fontSize: '0.82rem',
+            fontWeight: '700',
+            cursor: 'pointer',
+            background: 'var(--surface-color)',
+            border: '1px solid var(--surface-border)',
+            color: 'var(--text-color)'
+          }}
+          title="Abrir caixa de diálogo do navegador para impressão"
+        >
+          <Printer size={15} /> Imprimir
+        </button>
+      </div>
+
+      {/* ESTILOS DE IMPRESSÃO (@media print) E ANIMAÇÃO */}
       <style dangerouslySetInnerHTML={{
         __html: `
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
         @media print {
           @page {
             size: A4 portrait;
