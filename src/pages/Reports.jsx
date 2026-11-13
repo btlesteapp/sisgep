@@ -74,7 +74,7 @@ const Reports = () => {
   // Controles de Configuração do Relatório
   const [showFilters, setShowFilters] = useState(true);
   const [reportTitle, setReportTitle] = useState('RELATÓRIO ESTATÍSTICO E OPERACIONAL');
-  const [reportSubtitle, setReportSubtitle] = useState('BATALHÃO DE POLICIAMENTO DE ÁREA LESTE - CPA LESTE / PMAM');
+  const [reportSubtitle, setReportSubtitle] = useState('BATALHÃO DE POLICIAMENTO DE ÁREA LESTE - BTL LESTE / PMAM');
   const [officerName, setOfficerName] = useState('COMANDANTE DO BATALHÃO LESTE');
   const [commandNotes, setCommandNotes] = useState('O presente relatório consolidado apresenta o comportamento dos indicadores de criminalidade e a produtividade operacional policial referente ao período analisado, evidenciando as ações preventivas e repressivas desenvolvidas.');
 
@@ -500,45 +500,54 @@ const Reports = () => {
         }}
       >
         {/* CABEÇALHO OFICIAL TIMBRADO */}
-        <header style={{
-          borderBottom: '2.5px solid #0f172a',
-          paddingBottom: '1.2rem',
-          marginBottom: '1.5rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '1.5rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <header
+          className="report-header"
+          style={{
+            borderBottom: '2.5px solid #0f172a',
+            paddingBottom: '1rem',
+            marginBottom: '1.2rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
+            boxSizing: 'border-box',
+            pageBreakInside: 'avoid',
+            breakInside: 'avoid'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
             <img
               src="./logo.png"
               alt="Logo BTL LESTE"
-              style={{ width: '64px', height: '64px', objectFit: 'contain' }}
+              style={{ width: '56px', height: '56px', objectFit: 'contain', flexShrink: 0 }}
             />
-            <div>
-              <h2 style={{ fontSize: '0.95rem', fontWeight: '900', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#0f172a' }}>
+            <div style={{ minWidth: 0 }}>
+              <h2 style={{ fontSize: '0.88rem', fontWeight: '900', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#0f172a', lineHeight: 1.25 }}>
                 POLÍCIA MILITAR DO ESTADO DO AMAZONAS
               </h2>
-              <h3 style={{ fontSize: '0.85rem', fontWeight: '800', margin: '2px 0', textTransform: 'uppercase', color: '#1e3a8a' }}>
+              <h3 style={{ fontSize: '0.78rem', fontWeight: '800', margin: '2px 0', textTransform: 'uppercase', color: '#1e3a8a', lineHeight: 1.25 }}>
                 BATALHÃO LESTE - CONQUISTAR E MANTER!
               </h3>
-              <p style={{ fontSize: '0.75rem', fontWeight: '700', margin: 0, color: '#475569', textTransform: 'uppercase' }}>
+              <p style={{ fontSize: '0.7rem', fontWeight: '700', margin: 0, color: '#475569', textTransform: 'uppercase', lineHeight: 1.25 }}>
                 {reportSubtitle}
               </p>
             </div>
           </div>
 
-          <div style={{ textAlign: 'right', fontSize: '0.75rem', color: '#475569' }}>
-            <div><strong>Emissão:</strong> {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
-            <div style={{ marginTop: '2px' }}>
+          <div style={{ textAlign: 'right', fontSize: '0.7rem', color: '#475569', flexShrink: 0, marginLeft: '12px' }}>
+            <div style={{ whiteSpace: 'nowrap' }}>
+              <strong>Emissão:</strong> {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+            <div style={{ marginTop: '3px' }}>
               <span style={{
-                background: '#1e3a8a18',
+                background: '#e0e7ff',
                 color: '#1e3a8a',
                 padding: '2px 8px',
                 borderRadius: '4px',
                 fontWeight: '800',
-                fontSize: '0.7rem',
-                display: 'inline-block'
+                fontSize: '0.68rem',
+                display: 'inline-block',
+                whiteSpace: 'nowrap'
               }}>
                 PERÍODO: {getPeriodLabel()} ({rangeLabel})
               </span>
@@ -928,28 +937,66 @@ const Reports = () => {
       <style dangerouslySetInnerHTML={{
         __html: `
         @media print {
-          body {
+          @page {
+            size: A4 portrait;
+            margin: 8mm 10mm 10mm 10mm;
+          }
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            box-sizing: border-box !important;
+          }
+          html, body, #root, .app-layout, .main-content {
             background: #ffffff !important;
-            color: #000000 !important;
+            color: #0f172a !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+            min-height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            display: block !important;
+            position: static !important;
           }
           .no-print, .sidebar, .mobile-toggle {
             display: none !important;
           }
-          .main-content {
-            margin: 0 !important;
-            padding: 0 !important;
-            height: auto !important;
-            overflow: visible !important;
-          }
           .report-document {
             box-shadow: none !important;
+            border: none !important;
             padding: 0 !important;
+            margin: 0 !important;
             max-width: 100% !important;
+            width: 100% !important;
             border-radius: 0 !important;
+            background: #ffffff !important;
+            color: #0f172a !important;
+          }
+          .report-header {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            border-bottom: 2px solid #0f172a !important;
+            padding-bottom: 8px !important;
+            margin-bottom: 12px !important;
+          }
+          section, table, tr, footer {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          thead {
+            display: table-header-group !important;
           }
           .notes-textarea {
             border: none !important;
             resize: none !important;
+            overflow: visible !important;
+            height: auto !important;
           }
         }
       `}} />
