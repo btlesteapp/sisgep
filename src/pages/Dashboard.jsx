@@ -6,7 +6,8 @@ import {
   Skull, HandCoins, Car, Bus, Store, Zap, Package,
   ShieldAlert, UserMinus, CarFront, FlaskConical, Layers, Lock, Ghost, Search,
   TrendingUp, TrendingDown, Minus, Layers as LayersIcon, Image as ImageIcon,
-  ShieldCheck, ArrowUpRight, ArrowDownRight, Scale, Check
+  ShieldCheck, ArrowUpRight, ArrowDownRight, Scale, Check,
+  Table as TableIcon, BarChart3
 } from 'lucide-react';
 import FlyerModal from '../components/FlyerModal';
 import ZoneIndicators from '../components/ZoneIndicators';
@@ -82,14 +83,82 @@ const KPICard = ({ title, value, variation, icon: Icon, color, isInverse = false
   );
 };
 
-const ComparativeTooltip = ({ active, payload, label, prevYearKey, currYearKey, isInverse = false }) => {
+const YEAR_COLORS = {
+  2021: '#64748b',
+  2022: '#8b5cf6',
+  2023: '#06b6d4',
+  2024: '#f59e0b',
+  2025: '#94a3b8',
+  2026: '#3b82f6',
+};
+
+const getComparisonBadge = (valBase, valTarget, isInverse = false) => {
+  const numBase = Number(valBase || 0);
+  const numTarget = Number(valTarget || 0);
+  const diff = numTarget - numBase;
+
+  if (diff === 0) {
+    return {
+      text: '— NEUTRO',
+      tipo: 'neutro',
+      style: {
+        background: 'rgba(148, 163, 184, 0.12)',
+        color: 'var(--text-muted)',
+        border: '1px solid rgba(148, 163, 184, 0.25)'
+      },
+      icon: Minus
+    };
+  }
+
+  const pct = numBase > 0 ? ((numTarget - numBase) / numBase) * 100 : (numTarget > 0 ? 100 : 0);
+  const isGood = isInverse ? diff < 0 : diff > 0;
+  
+  // Se os valores forem pequenos (< 15), exibe quantidade de registros conforme relatório oficial
+  const useAbsolute = (numBase < 15 && numTarget < 15);
+  const formattedDiff = diff > 0 ? `+${diff % 1 === 0 ? diff : diff.toFixed(1)}` : `${diff % 1 === 0 ? diff : diff.toFixed(1)}`;
+  const formattedPct = `${pct > 0 ? `+${pct.toFixed(0)}%` : `${pct.toFixed(0)}%`}`;
+  
+  const text = useAbsolute
+    ? `${formattedDiff} REGISTROS`
+    : `${formattedPct}${Math.abs(pct) >= 20 ? ' 👍' : ''}`;
+
+  if (isGood) {
+    return {
+      text,
+      tipo: 'bom',
+      style: {
+        background: 'rgba(16, 185, 129, 0.15)',
+        color: '#10b981',
+        border: '1px solid rgba(16, 185, 129, 0.3)'
+      },
+      icon: isInverse ? TrendingDown : TrendingUp
+    };
+  } else {
+    return {
+      text,
+      tipo: 'ruim',
+      style: {
+        background: 'rgba(239, 68, 68, 0.15)',
+        color: '#ef4444',
+        border: '1px solid rgba(239, 68, 68, 0.3)'
+      },
+      icon: isInverse ? TrendingUp : TrendingDown
+    };
+  }
+};
+
+const MultiYearTooltip = ({ active, payload, label, selectedYears, isInverse = false }) => {
   if (active && payload && payload.length) {
-    const prevItem = payload.find(p => p.dataKey === prevYearKey);
-    const currItem = payload.find(p => p.dataKey === currYearKey);
-    const prevVal = Number(prevItem?.value || 0);
-    const currVal = Number(currItem?.value || 0);
-    const diff = currVal - prevVal;
-    const pct = prevVal > 0 ? ((currVal - prevVal) / prevVal) * 100 : (currVal > 0 ? 100 : 0);
+    const targetYear = selectedYears[selectedYears.length - 1];
+    const baseYear = selectedYears.length > 1 ? selectedYears[selectedYears.length - 2] : null;
+
+    const baseItem = baseYear ? payload.find(p => p.dataKey === `Ano ${baseYear}`) : null;
+    const targetItem = targetYear ? payload.find(p => p.dataKey === `Ano ${targetYear}`) : null;
+
+    const baseVal = Number(baseItem?.value || 0);
+    const targetVal = Number(targetItem?.value || 0);
+    const diff = targetVal - baseVal;
+    const pct = baseVal > 0 ? ((targetVal - baseVal) / baseVal) * 100 : (targetVal > 0 ? 100 : 0);
     const isGood = isInverse ? diff <= 0 : diff >= 0;
 
     return (
@@ -107,28 +176,34 @@ const ComparativeTooltip = ({ active, payload, label, prevYearKey, currYearKey, 
         <div style={{ fontWeight: '800', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '6px', fontSize: '0.85rem' }}>
           {label}
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-          <span style={{ color: '#94a3b8' }}>{prevYearKey}:</span>
-          <span style={{ fontWeight: '700' }}>{typeof prevVal === 'number' ? prevVal.toLocaleString('pt-BR') : prevVal}</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <span style={{ color: isInverse ? '#f87171' : '#34d399' }}>{currYearKey}:</span>
-          <span style={{ fontWeight: '800', color: isInverse ? '#f87171' : '#34d399' }}>{typeof currVal === 'number' ? currVal.toLocaleString('pt-BR') : currVal}</span>
-        </div>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          paddingTop: '6px',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          fontWeight: '800',
-          color: isGood ? '#10b981' : '#ef4444'
-        }}>
-          <span>Variação:</span>
-          <span>
-            {diff > 0 ? `+${diff.toLocaleString('pt-BR')}` : diff.toLocaleString('pt-BR')} ({pct > 0 ? '+' : ''}{pct.toFixed(1)}%)
-          </span>
-        </div>
+        {payload.map((p) => (
+          <div key={p.dataKey} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+            <span style={{ color: p.color || '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: p.color || '#94a3b8', display: 'inline-block' }}></span>
+              {p.dataKey}:
+            </span>
+            <span style={{ fontWeight: '700' }}>
+              {typeof p.value === 'number' ? (p.value % 1 === 0 ? p.value.toLocaleString('pt-BR') : p.value.toFixed(2)) : p.value}
+            </span>
+          </div>
+        ))}
+        {baseYear && targetYear && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: '6px',
+            paddingTop: '6px',
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            fontWeight: '800',
+            color: isGood ? '#10b981' : '#ef4444'
+          }}>
+            <span>Variação ({baseYear} vs {targetYear}):</span>
+            <span>
+              {diff > 0 ? `+${diff.toLocaleString('pt-BR')}` : diff.toLocaleString('pt-BR')} ({pct > 0 ? '+' : ''}{pct.toFixed(1)}%)
+            </span>
+          </div>
+        )}
       </div>
     );
   }
@@ -171,7 +246,7 @@ const MonthFilterBar = ({
       border: '1px solid var(--surface-border)',
       borderRadius: '12px',
       padding: '10px 14px',
-      marginBottom: '1.2rem',
+      marginBottom: '1rem',
       display: 'flex',
       flexDirection: 'column',
       gap: '8px'
@@ -300,140 +375,340 @@ const MonthFilterBar = ({
   );
 };
 
-const YearFilterSelector = ({
+const MultiYearFilterBar = ({
   years,
-  yearBase,
-  yearTarget,
-  onYearBaseChange,
-  onYearTargetChange,
-  activeColor = 'var(--primary-color)'
+  selectedYears,
+  onChange,
+  activeColor = 'var(--primary-color)',
+  title = "Filtrar por Ano"
 }) => {
+  const isAll = selectedYears.length === years.length;
+  const isLast2 = selectedYears.length === 2 && selectedYears.includes(2025) && selectedYears.includes(2026);
+  const isLast3 = selectedYears.length === 3 && selectedYears.includes(2024) && selectedYears.includes(2025) && selectedYears.includes(2026);
+  const is2021vs2026 = selectedYears.length === 2 && selectedYears.includes(2021) && selectedYears.includes(2026);
+
+  const toggleYear = (yr) => {
+    if (selectedYears.includes(yr)) {
+      if (selectedYears.length === 1) return; // manter ao menos 1 ano selecionado
+      onChange(selectedYears.filter(y => y !== yr));
+    } else {
+      onChange([...selectedYears, yr].sort((a, b) => a - b));
+    }
+  };
+
+  const getPeriodLabel = () => {
+    if (isAll) return 'Todos os Anos (2021 a 2026)';
+    if (isLast2) return '2025 vs 2026';
+    if (isLast3) return '2024 a 2026';
+    if (is2021vs2026) return '2021 vs 2026';
+    if (selectedYears.length === 1) return `Ano ${selectedYears[0]}`;
+    return `${selectedYears.join(', ')}`;
+  };
+
   return (
     <div style={{
-      display: 'flex',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: '8px',
       background: 'rgba(255, 255, 255, 0.02)',
       border: '1px solid var(--surface-border)',
-      padding: '8px 12px',
-      borderRadius: '10px',
-      marginBottom: '0.8rem'
+      borderRadius: '12px',
+      padding: '10px 14px',
+      marginBottom: '0.8rem',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Calendar size={14} color={activeColor} />
           <span style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--text-color)', textTransform: 'uppercase' }}>
-            Comparar Anos:
+            {title}:
+          </span>
+          <span style={{
+            fontSize: '0.68rem',
+            fontWeight: '700',
+            color: activeColor,
+            background: `${activeColor}18`,
+            padding: '2px 8px',
+            borderRadius: '6px'
+          }}>
+            {getPeriodLabel()}
           </span>
         </div>
 
-        {/* Ano Base */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: '700' }}>Ano Base:</span>
-          <select
-            value={yearBase}
-            onChange={(e) => onYearBaseChange(Number(e.target.value))}
+        {/* Atalhos Rápidos de Ano */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => onChange([...years])}
             style={{
-              padding: '4px 8px',
-              borderRadius: '6px',
-              fontSize: '0.75rem',
-              fontWeight: '800',
+              padding: '3px 8px',
+              borderRadius: '5px',
+              fontSize: '0.65rem',
+              fontWeight: '700',
               border: '1px solid var(--surface-border)',
-              background: 'var(--surface-color)',
-              color: 'var(--text-color)',
+              background: isAll ? activeColor : 'transparent',
+              color: isAll ? '#fff' : 'var(--text-muted)',
               cursor: 'pointer',
-              outline: 'none'
+              transition: 'all 0.15s ease'
             }}
           >
-            {years.map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-        </div>
-
-        <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)' }}>vs</span>
-
-        {/* Ano Alvo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span style={{ fontSize: '0.68rem', color: activeColor, fontWeight: '700' }}>Ano Comparado:</span>
-          <select
-            value={yearTarget}
-            onChange={(e) => onYearTargetChange(Number(e.target.value))}
+            Todos
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange([2025, 2026])}
             style={{
-              padding: '4px 8px',
-              borderRadius: '6px',
-              fontSize: '0.75rem',
-              fontWeight: '800',
-              border: `1.5px solid ${activeColor}`,
-              background: 'var(--surface-color)',
-              color: activeColor,
+              padding: '3px 8px',
+              borderRadius: '5px',
+              fontSize: '0.65rem',
+              fontWeight: '700',
+              border: '1px solid var(--surface-border)',
+              background: isLast2 ? activeColor : 'transparent',
+              color: isLast2 ? '#fff' : 'var(--text-muted)',
               cursor: 'pointer',
-              outline: 'none'
+              transition: 'all 0.15s ease'
             }}
           >
-            {years.map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
+            2025 e 2026
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange([2024, 2025, 2026])}
+            style={{
+              padding: '3px 8px',
+              borderRadius: '5px',
+              fontSize: '0.65rem',
+              fontWeight: '700',
+              border: '1px solid var(--surface-border)',
+              background: isLast3 ? activeColor : 'transparent',
+              color: isLast3 ? '#fff' : 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            2024 a 2026
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange([2021, 2026])}
+            style={{
+              padding: '3px 8px',
+              borderRadius: '5px',
+              fontSize: '0.65rem',
+              fontWeight: '700',
+              border: '1px solid var(--surface-border)',
+              background: is2021vs2026 ? activeColor : 'transparent',
+              color: is2021vs2026 ? '#fff' : 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            2021 vs 2026
+          </button>
         </div>
       </div>
 
-      {/* Pílulas de Atalhos Rápidos de Anos */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-        <button
-          type="button"
-          onClick={() => { onYearBaseChange(2025); onYearTargetChange(2026); }}
-          style={{
-            padding: '3px 8px',
-            borderRadius: '5px',
-            fontSize: '0.65rem',
-            fontWeight: '700',
-            border: '1px solid var(--surface-border)',
-            background: yearBase === 2025 && yearTarget === 2026 ? activeColor : 'transparent',
-            color: yearBase === 2025 && yearTarget === 2026 ? '#fff' : 'var(--text-muted)',
-            cursor: 'pointer',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          2025 vs 2026
-        </button>
-        <button
-          type="button"
-          onClick={() => { onYearBaseChange(2024); onYearTargetChange(2025); }}
-          style={{
-            padding: '3px 8px',
-            borderRadius: '5px',
-            fontSize: '0.65rem',
-            fontWeight: '700',
-            border: '1px solid var(--surface-border)',
-            background: yearBase === 2024 && yearTarget === 2025 ? activeColor : 'transparent',
-            color: yearBase === 2024 && yearTarget === 2025 ? '#fff' : 'var(--text-muted)',
-            cursor: 'pointer',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          2024 vs 2025
-        </button>
-        <button
-          type="button"
-          onClick={() => { onYearBaseChange(2021); onYearTargetChange(2026); }}
-          style={{
-            padding: '3px 8px',
-            borderRadius: '5px',
-            fontSize: '0.65rem',
-            fontWeight: '700',
-            border: '1px solid var(--surface-border)',
-            background: yearBase === 2021 && yearTarget === 2026 ? activeColor : 'transparent',
-            color: yearBase === 2021 && yearTarget === 2026 ? '#fff' : 'var(--text-muted)',
-            cursor: 'pointer',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          2021 vs 2026
-        </button>
+      {/* Pílulas de Cada Ano (Seleção Múltipla) */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+        {years.map((y) => {
+          const isSelected = selectedYears.includes(y);
+          return (
+            <button
+              key={y}
+              type="button"
+              onClick={() => toggleYear(y)}
+              style={{
+                flex: '1 0 calc(16.66% - 6px)',
+                minWidth: '55px',
+                padding: '6px 8px',
+                borderRadius: '6px',
+                fontSize: '0.75rem',
+                fontWeight: isSelected ? '800' : '600',
+                border: isSelected ? `1.5px solid ${activeColor}` : '1px solid var(--surface-border)',
+                background: isSelected ? `${activeColor}22` : 'rgba(255, 255, 255, 0.02)',
+                color: isSelected ? activeColor : 'var(--text-muted)',
+                cursor: 'pointer',
+                textAlign: 'center',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              {isSelected ? `✓ ${y}` : y}
+            </button>
+          );
+        })}
       </div>
+    </div>
+  );
+};
+
+const OfficialTable = ({
+  items,
+  icons,
+  years,
+  getYearValue,
+  isInverse = false,
+  activeColor = '#3b82f6',
+  totalLabel = "TOTAL GERAL"
+}) => {
+  const targetYear = years[years.length - 1];
+  const baseYear = years.length > 1 ? years[years.length - 2] : (years[0] > 2021 ? years[0] - 1 : years[0]);
+
+  // Totais por ano
+  const totalsByYear = {};
+  years.forEach(y => {
+    totalsByYear[y] = items.reduce((acc, item) => acc + Number(getYearValue(y, item) || 0), 0);
+  });
+
+  const totalBaseVal = totalsByYear[baseYear] || 0;
+  const totalTargetVal = totalsByYear[targetYear] || 0;
+  const totalBadge = getComparisonBadge(totalBaseVal, totalTargetVal, isInverse);
+  const TotalBadgeIcon = totalBadge.icon;
+
+  return (
+    <div style={{ overflowX: 'auto', borderRadius: '10px', border: '1px solid var(--surface-border)', background: 'var(--surface-color)' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.78rem' }}>
+        <thead>
+          <tr style={{ background: 'var(--surface-border)', color: 'var(--text-color)', fontWeight: '800', textTransform: 'uppercase' }}>
+            <th style={{ padding: '10px 14px', textAlign: 'left', minWidth: '220px' }}>NATUREZA</th>
+            {years.map(y => {
+              const isTarget = y === targetYear;
+              return (
+                <th
+                  key={y}
+                  style={{
+                    padding: '10px 10px',
+                    minWidth: '70px',
+                    background: isTarget ? `${activeColor}20` : 'transparent',
+                    color: isTarget ? activeColor : 'inherit',
+                    fontWeight: isTarget ? '900' : '800'
+                  }}
+                >
+                  {y}
+                </th>
+              );
+            })}
+            <th style={{ padding: '10px 14px', minWidth: '160px' }}>
+              COMPARATIVO % {years.length > 1 && `(${baseYear} vs ${targetYear})`}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item, idx) => {
+            const Icon = icons[item] || ShieldAlert;
+            const valBase = getYearValue(baseYear, item);
+            const valTarget = getYearValue(targetYear, item);
+            const badge = getComparisonBadge(valBase, valTarget, isInverse);
+            const BadgeIcon = badge.icon;
+
+            return (
+              <tr
+                key={item}
+                style={{
+                  borderBottom: '1px solid var(--surface-border)',
+                  background: idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.015)'
+                }}
+              >
+                {/* NATUREZA COM ÍCONE */}
+                <td style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '600', color: 'var(--text-color)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Icon size={15} color={activeColor} style={{ flexShrink: 0 }} />
+                    <span>{item}</span>
+                  </div>
+                </td>
+
+                {/* VALORES DOS ANOS SELECIONADOS */}
+                {years.map(y => {
+                  const val = getYearValue(y, item);
+                  const isTarget = y === targetYear;
+                  return (
+                    <td
+                      key={y}
+                      style={{
+                        padding: '10px 10px',
+                        background: isTarget ? `${activeColor}08` : 'transparent',
+                        fontWeight: isTarget ? '800' : '500',
+                        color: isTarget ? activeColor : 'var(--text-muted)'
+                      }}
+                    >
+                      {typeof val === 'number'
+                        ? (val % 1 === 0 ? val.toLocaleString('pt-BR') : val.toFixed(2))
+                        : val}
+                    </td>
+                  );
+                })}
+
+                {/* COMPARATIVO BADGE */}
+                <td style={{ padding: '8px 14px' }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      fontSize: '0.72rem',
+                      fontWeight: '800',
+                      ...badge.style
+                    }}
+                  >
+                    <BadgeIcon size={12} />
+                    {badge.text}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+
+          {/* LINHA DE TOTAL GERAL */}
+          <tr style={{
+            background: 'rgba(255, 255, 255, 0.04)',
+            borderTop: '2px solid var(--surface-border)',
+            fontWeight: '800'
+          }}>
+            <td style={{ padding: '12px 14px', textAlign: 'left', color: 'var(--text-color)', letterSpacing: '0.5px' }}>
+              {totalLabel}
+            </td>
+            {years.map(y => {
+              const val = totalsByYear[y] || 0;
+              const isTarget = y === targetYear;
+              return (
+                <td
+                  key={y}
+                  style={{
+                    padding: '12px 10px',
+                    fontWeight: '900',
+                    fontSize: '0.85rem',
+                    background: isTarget ? `${activeColor}15` : 'transparent',
+                    color: isTarget ? activeColor : 'var(--text-color)'
+                  }}
+                >
+                  {typeof val === 'number'
+                    ? (val % 1 === 0 ? val.toLocaleString('pt-BR') : val.toFixed(2))
+                    : val}
+                </td>
+              );
+            })}
+            <td style={{ padding: '10px 14px' }}>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  fontSize: '0.72rem',
+                  fontWeight: '800',
+                  ...totalBadge.style
+                }}
+              >
+                <TotalBadgeIcon size={12} />
+                {totalBadge.text}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   );
 };
@@ -511,16 +786,13 @@ const Dashboard = () => {
     });
   }
 
-  // Filtros de Anos para Criminalidade e Produtividade (Padrão: 2025 vs 2026)
-  const [statsYearBase, setStatsYearBase] = useState(2025);
-  const [statsYearTarget, setStatsYearTarget] = useState(2026);
-  const [prodYearBase, setProdYearBase] = useState(2025);
-  const [prodYearTarget, setProdYearTarget] = useState(2026);
+  // Modos de visualização (Tabela Oficial vs Gráfico Comparativo)
+  const [statsViewMode, setStatsViewMode] = useState('tabela'); // 'tabela' | 'grafico'
+  const [prodViewMode, setProdViewMode] = useState('tabela');   // 'tabela' | 'grafico'
 
-  const statsYearBaseKey = `Ano ${statsYearBase}`;
-  const statsYearTargetKey = `Ano ${statsYearTarget}`;
-  const prodYearBaseKey = `Ano ${prodYearBase}`;
-  const prodYearTargetKey = `Ano ${prodYearTarget}`;
+  // Filtros múltiplos de anos (por padrão todos os anos 2021 a 2026 para a tabela oficial completa)
+  const [selectedStatsYears, setSelectedStatsYears] = useState([2021, 2022, 2023, 2024, 2025, 2026]);
+  const [selectedProdYears, setSelectedProdYears] = useState([2021, 2022, 2023, 2024, 2025, 2026]);
 
   // Filtros múltiplos de meses para Criminalidade e Produtividade (por padrão: JAN a SET)
   const [selectedStatsMonths, setSelectedStatsMonths] = useState([0, 1, 2, 3, 4, 5, 6, 7, 8]);
@@ -533,33 +805,26 @@ const Dashboard = () => {
   };
 
   const statsComparativeData = STATS_ITEMS.map(item => {
-    const valPrev = getMonthsTotal('stats', statsYearBase, item, selectedStatsMonths);
-    const valCurr = getMonthsTotal('stats', statsYearTarget, item, selectedStatsMonths);
-    const diff = valCurr - valPrev;
-    const pct = valPrev > 0 ? ((valCurr - valPrev) / valPrev) * 100 : (valCurr > 0 ? 100 : 0);
-    return {
-      name: item,
-      [statsYearBaseKey]: valPrev,
-      [statsYearTargetKey]: valCurr,
-      diff,
-      pct
-    };
+    const row = { name: item };
+    selectedStatsYears.forEach(y => {
+      row[`Ano ${y}`] = getMonthsTotal('stats', y, item, selectedStatsMonths);
+    });
+    return row;
   });
 
   const prodComparativeData = PROD_ITEMS.map(item => {
-    const valPrev = getMonthsTotal('prod', prodYearBase, item, selectedProdMonths);
-    const valCurr = getMonthsTotal('prod', prodYearTarget, item, selectedProdMonths);
-    const diff = valCurr - valPrev;
-    const pct = valPrev > 0 ? ((valCurr - valPrev) / valPrev) * 100 : (valCurr > 0 ? 100 : 0);
-    return {
-      name: item,
-      [prodYearBaseKey]: valPrev,
-      [prodYearTargetKey]: valCurr,
-      diff,
-      pct
-    };
+    const row = { name: item };
+    selectedProdYears.forEach(y => {
+      row[`Ano ${y}`] = getMonthsTotal('prod', y, item, selectedProdMonths);
+    });
+    return row;
   });
 
+  const statsTargetYear = selectedStatsYears[selectedStatsYears.length - 1];
+  const statsBaseYear = selectedStatsYears.length > 1 ? selectedStatsYears[selectedStatsYears.length - 2] : (selectedStatsYears[0] > 2021 ? selectedStatsYears[0] - 1 : selectedStatsYears[0]);
+
+  const prodTargetYear = selectedProdYears[selectedProdYears.length - 1];
+  const prodBaseYear = selectedProdYears.length > 1 ? selectedProdYears[selectedProdYears.length - 2] : (selectedProdYears[0] > 2021 ? selectedProdYears[0] - 1 : selectedProdYears[0]);
 
   const statsIcons = {
     "HOMICÍDIO DOLOSO": Skull, "LATROCÍNIO": HandCoins, "ROUBO DE VEÍCULOS": Car,
@@ -633,41 +898,81 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* GRÁFICO 1: COMPARATIVO DOS ÍNDICES CRIMINAIS */}
+      {/* SEÇÃO 1: COMPARATIVO DOS ÍNDICES CRIMINAIS (TABELA OFICIAL E GRÁFICO) */}
       <div className="glass-panel" style={{ padding: '1.5rem', marginTop: '2rem', borderRadius: '16px' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.2rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <AlertTriangle size={20} color="#ef4444" />
               <h3 style={{ fontSize: '1.15rem', fontWeight: '800', margin: 0 }}>
-                Comparativo dos Índices Criminais ({statsYearBase} vs {statsYearTarget})
+                Índices Criminais - {statsViewMode === 'tabela' ? 'Tabela Oficial' : 'Gráfico Comparativo'} ({statsBaseYear} vs {statsTargetYear})
               </h3>
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '4px 0 0 0' }}>
-              Comparativo direto de ocorrências criminais entre os anos {statsYearBase} e {statsYearTarget}
+              Monitoramento criminal comparativo com seleção múltipla de anos e meses
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.75rem', fontWeight: '700' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#94a3b8', display: 'inline-block' }}></span>
-              <span style={{ color: 'var(--text-muted)' }}>{statsYearBaseKey}</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#ef4444', display: 'inline-block' }}></span>
-              <span style={{ color: '#ef4444' }}>{statsYearTargetKey}</span>
-            </div>
+          {/* Toggle de Visualização: Tabela Oficial vs Gráfico Comparativo */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            background: 'var(--surface-color)',
+            padding: '4px',
+            borderRadius: '10px',
+            border: '1px solid var(--surface-border)'
+          }}>
+            <button
+              type="button"
+              onClick={() => setStatsViewMode('tabela')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                fontSize: '0.75rem',
+                fontWeight: '700',
+                border: statsViewMode === 'tabela' ? '1px solid #ef4444' : '1px solid transparent',
+                background: statsViewMode === 'tabela' ? '#ef4444' : 'transparent',
+                color: statsViewMode === 'tabela' ? 'white' : 'var(--text-muted)',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              <TableIcon size={14} /> Tabela Oficial
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatsViewMode('grafico')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                fontSize: '0.75rem',
+                fontWeight: '700',
+                border: statsViewMode === 'grafico' ? '1px solid #ef4444' : '1px solid transparent',
+                background: statsViewMode === 'grafico' ? '#ef4444' : 'transparent',
+                color: statsViewMode === 'grafico' ? 'white' : 'var(--text-muted)',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              <BarChart3 size={14} /> Gráfico Comparativo
+            </button>
           </div>
         </div>
 
-        {/* Filtro de Ano para Criminalidade */}
-        <YearFilterSelector
+        {/* Filtro Múltiplo de Anos para Criminalidade */}
+        <MultiYearFilterBar
           years={YEARS}
-          yearBase={statsYearBase}
-          yearTarget={statsYearTarget}
-          onYearBaseChange={setStatsYearBase}
-          onYearTargetChange={setStatsYearTarget}
+          selectedYears={selectedStatsYears}
+          onChange={setSelectedStatsYears}
           activeColor="#ef4444"
+          title="Filtro de Anos (Criminalidade)"
         />
 
         {/* Filtro Múltiplo de Meses para Criminalidade */}
@@ -679,46 +984,73 @@ const Dashboard = () => {
           title="Filtro de Meses (Criminalidade)"
         />
 
-        <div style={{ height: '360px', width: '100%' }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={statsComparativeData}
-              margin={{ top: 25, right: 20, left: 0, bottom: 65 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-border)" vertical={false} />
-              <XAxis
-                dataKey="name"
-                stroke="var(--text-muted)"
-                fontSize={9}
-                interval={0}
-                angle={-35}
-                textAnchor="end"
-                height={65}
-              />
-              <YAxis stroke="var(--text-muted)" fontSize={10} />
-              <Tooltip
-                content={<ComparativeTooltip prevYearKey={statsYearBaseKey} currYearKey={statsYearTargetKey} isInverse={true} />}
-              />
-              <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '0.8rem', paddingBottom: '10px' }} />
-              <Bar dataKey={statsYearBaseKey} fill="#94a3b8" radius={[4, 4, 0, 0]}>
-                <LabelList dataKey={statsYearBaseKey} position="top" fill="var(--text-muted)" fontSize={9} />
-              </Bar>
-              <Bar dataKey={statsYearTargetKey} fill="#ef4444" radius={[4, 4, 0, 0]}>
-                <LabelList dataKey={statsYearTargetKey} position="top" fill="#ef4444" fontSize={9} fontWeight="bold" />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        {/* Exibição: Tabela Oficial ou Gráfico */}
+        {statsViewMode === 'tabela' ? (
+          <OfficialTable
+            items={STATS_ITEMS}
+            icons={statsIcons}
+            years={selectedStatsYears}
+            getYearValue={(year, item) => getMonthsTotal('stats', year, item, selectedStatsMonths)}
+            isInverse={true}
+            activeColor="#ef4444"
+            totalLabel="TOTAL DE CRIMES"
+          />
+        ) : (
+          <div style={{ overflowX: 'auto', width: '100%' }}>
+            <div style={{ height: '360px', minWidth: selectedStatsYears.length > 3 ? '850px' : '100%' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={statsComparativeData}
+                  margin={{ top: 25, right: 20, left: 0, bottom: 65 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-border)" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    stroke="var(--text-muted)"
+                    fontSize={9}
+                    interval={0}
+                    angle={-35}
+                    textAnchor="end"
+                    height={65}
+                  />
+                  <YAxis stroke="var(--text-muted)" fontSize={10} />
+                  <Tooltip
+                    content={<MultiYearTooltip selectedYears={selectedStatsYears} isInverse={true} />}
+                  />
+                  <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '0.8rem', paddingBottom: '10px' }} />
+                  {selectedStatsYears.map((y, idx) => {
+                    const isTarget = idx === selectedStatsYears.length - 1;
+                    const barColor = selectedStatsYears.length === 2
+                      ? (isTarget ? '#ef4444' : '#94a3b8')
+                      : (y === 2026 ? '#ef4444' : (YEAR_COLORS[y] || '#ef4444'));
+                    return (
+                      <Bar key={y} dataKey={`Ano ${y}`} fill={barColor} radius={[4, 4, 0, 0]}>
+                        <LabelList
+                          dataKey={`Ano ${y}`}
+                          position="top"
+                          fill={barColor}
+                          fontSize={9}
+                          fontWeight={isTarget ? 'bold' : 'normal'}
+                          formatter={(val) => typeof val === 'number' ? (val % 1 === 0 ? val : val.toFixed(1)) : val}
+                        />
+                      </Bar>
+                    );
+                  })}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* GRÁFICO 2: COMPARATIVO DA PRODUTIVIDADE */}
+      {/* SEÇÃO 2: COMPARATIVO DA PRODUTIVIDADE POLICIAL (TABELA OFICIAL E GRÁFICO) */}
       <div className="glass-panel" style={{ padding: '1.5rem', marginTop: '1.5rem', borderRadius: '16px' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.2rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <ShieldCheck size={20} color="#10b981" />
               <h3 style={{ fontSize: '1.15rem', fontWeight: '800', margin: 0 }}>
-                Comparativo de Produtividade Policial ({prodYearBase} vs {prodYearTarget})
+                Produtividade Policial - {prodViewMode === 'tabela' ? 'Tabela Oficial' : 'Gráfico Comparativo'} ({prodBaseYear} vs {prodTargetYear})
               </h3>
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '4px 0 0 0' }}>
@@ -726,26 +1058,66 @@ const Dashboard = () => {
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.75rem', fontWeight: '700' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#94a3b8', display: 'inline-block' }}></span>
-              <span style={{ color: 'var(--text-muted)' }}>{prodYearBaseKey}</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#10b981', display: 'inline-block' }}></span>
-              <span style={{ color: '#10b981' }}>{prodYearTargetKey}</span>
-            </div>
+          {/* Toggle de Visualização: Tabela Oficial vs Gráfico Comparativo */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            background: 'var(--surface-color)',
+            padding: '4px',
+            borderRadius: '10px',
+            border: '1px solid var(--surface-border)'
+          }}>
+            <button
+              type="button"
+              onClick={() => setProdViewMode('tabela')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                fontSize: '0.75rem',
+                fontWeight: '700',
+                border: prodViewMode === 'tabela' ? '1px solid #10b981' : '1px solid transparent',
+                background: prodViewMode === 'tabela' ? '#10b981' : 'transparent',
+                color: prodViewMode === 'tabela' ? 'white' : 'var(--text-muted)',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              <TableIcon size={14} /> Tabela Oficial
+            </button>
+            <button
+              type="button"
+              onClick={() => setProdViewMode('grafico')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                fontSize: '0.75rem',
+                fontWeight: '700',
+                border: prodViewMode === 'grafico' ? '1px solid #10b981' : '1px solid transparent',
+                background: prodViewMode === 'grafico' ? '#10b981' : 'transparent',
+                color: prodViewMode === 'grafico' ? 'white' : 'var(--text-muted)',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              <BarChart3 size={14} /> Gráfico Comparativo
+            </button>
           </div>
         </div>
 
-        {/* Filtro de Ano para Produtividade */}
-        <YearFilterSelector
+        {/* Filtro Múltiplo de Anos para Produtividade */}
+        <MultiYearFilterBar
           years={YEARS}
-          yearBase={prodYearBase}
-          yearTarget={prodYearTarget}
-          onYearBaseChange={setProdYearBase}
-          onYearTargetChange={setProdYearTarget}
+          selectedYears={selectedProdYears}
+          onChange={setSelectedProdYears}
           activeColor="#10b981"
+          title="Filtro de Anos (Produtividade)"
         />
 
         {/* Filtro Múltiplo de Meses para Produtividade */}
@@ -757,49 +1129,63 @@ const Dashboard = () => {
           title="Filtro de Meses (Produtividade)"
         />
 
-        <div style={{ height: '340px', width: '100%' }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={prodComparativeData}
-              margin={{ top: 25, right: 20, left: 0, bottom: 45 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-border)" vertical={false} />
-              <XAxis
-                dataKey="name"
-                stroke="var(--text-muted)"
-                fontSize={9}
-                interval={0}
-                angle={-20}
-                textAnchor="end"
-                height={50}
-              />
-              <YAxis stroke="var(--text-muted)" fontSize={10} />
-              <Tooltip
-                content={<ComparativeTooltip prevYearKey={prodYearBaseKey} currYearKey={prodYearTargetKey} isInverse={false} />}
-              />
-              <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '0.8rem', paddingBottom: '10px' }} />
-              <Bar dataKey={prodYearBaseKey} fill="#94a3b8" radius={[4, 4, 0, 0]}>
-                <LabelList
-                  dataKey={prodYearBaseKey}
-                  position="top"
-                  fill="var(--text-muted)"
-                  fontSize={9}
-                  formatter={(val) => typeof val === 'number' ? val.toFixed(2).replace(/\.00$/, '') : val}
-                />
-              </Bar>
-              <Bar dataKey={prodYearTargetKey} fill="#10b981" radius={[4, 4, 0, 0]}>
-                <LabelList
-                  dataKey={prodYearTargetKey}
-                  position="top"
-                  fill="#10b981"
-                  fontSize={9}
-                  fontWeight="bold"
-                  formatter={(val) => typeof val === 'number' ? val.toFixed(2).replace(/\.00$/, '') : val}
-                />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        {/* Exibição: Tabela Oficial ou Gráfico */}
+        {prodViewMode === 'tabela' ? (
+          <OfficialTable
+            items={PROD_ITEMS}
+            icons={prodIcons}
+            years={selectedProdYears}
+            getYearValue={(year, item) => getMonthsTotal('prod', year, item, selectedProdMonths)}
+            isInverse={false}
+            activeColor="#10b981"
+            totalLabel="TOTAL DE PRODUTIVIDADE"
+          />
+        ) : (
+          <div style={{ overflowX: 'auto', width: '100%' }}>
+            <div style={{ height: '340px', minWidth: selectedProdYears.length > 3 ? '750px' : '100%' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={prodComparativeData}
+                  margin={{ top: 25, right: 20, left: 0, bottom: 45 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--surface-border)" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    stroke="var(--text-muted)"
+                    fontSize={9}
+                    interval={0}
+                    angle={-20}
+                    textAnchor="end"
+                    height={50}
+                  />
+                  <YAxis stroke="var(--text-muted)" fontSize={10} />
+                  <Tooltip
+                    content={<MultiYearTooltip selectedYears={selectedProdYears} isInverse={false} />}
+                  />
+                  <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '0.8rem', paddingBottom: '10px' }} />
+                  {selectedProdYears.map((y, idx) => {
+                    const isTarget = idx === selectedProdYears.length - 1;
+                    const barColor = selectedProdYears.length === 2
+                      ? (isTarget ? '#10b981' : '#94a3b8')
+                      : (y === 2026 ? '#10b981' : (YEAR_COLORS[y] || '#10b981'));
+                    return (
+                      <Bar key={y} dataKey={`Ano ${y}`} fill={barColor} radius={[4, 4, 0, 0]}>
+                        <LabelList
+                          dataKey={`Ano ${y}`}
+                          position="top"
+                          fill={barColor}
+                          fontSize={9}
+                          fontWeight={isTarget ? 'bold' : 'normal'}
+                          formatter={(val) => typeof val === 'number' ? (val % 1 === 0 ? val : val.toFixed(1)) : val}
+                        />
+                      </Bar>
+                    );
+                  })}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Indicadores Por Zona (PDF / Estatísticas Oficiais de Manaus) */}
