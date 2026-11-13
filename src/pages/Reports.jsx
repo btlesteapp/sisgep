@@ -74,8 +74,8 @@ const Reports = () => {
   // Controles de Configuração do Relatório
   const [showFilters, setShowFilters] = useState(true);
   const [reportTitle, setReportTitle] = useState('RELATÓRIO ESTATÍSTICO E OPERACIONAL');
-  const [reportSubtitle, setReportSubtitle] = useState('COMANDO DE POLICIAMENTO DE ÁREA LESTE - CPA LESTE / SSP-AM');
-  const [officerName, setOfficerName] = useState('COMANDANTE DO CPA LESTE');
+  const [reportSubtitle, setReportSubtitle] = useState('BATALHÃO DE POLICIAMENTO DE ÁREA LESTE - CPA LESTE / PMAM');
+  const [officerName, setOfficerName] = useState('COMANDANTE DO BATALHÃO LESTE');
   const [commandNotes, setCommandNotes] = useState('O presente relatório consolidado apresenta o comportamento dos indicadores de criminalidade e a produtividade operacional policial referente ao período analisado, evidenciando as ações preventivas e repressivas desenvolvidas.');
 
   // Módulos
@@ -916,7 +916,7 @@ const Reports = () => {
             {officerName}
           </p>
           <p style={{ margin: '2px 0 0 0', fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase' }}>
-            Comando de Policiamento de Área Leste • PMAM
+            Batalhão de Policiamento de Área Leste • PMAM
           </p>
           <div style={{ fontSize: '0.62rem', color: '#94a3b8', marginTop: '1.5rem', textAlign: 'center' }}>
             Documento gerado eletronicamente pelo SISGEP-LESTE • Batalhão Leste • Conquistar e Manter!
