@@ -92,6 +92,17 @@ const YEAR_COLORS = {
   2026: '#3b82f6',
 };
 
+const formatYearRange = (years) => {
+  if (!years || years.length === 0) return '';
+  if (years.length === 1) return `${years[0]}`;
+  const minYear = Math.min(...years);
+  const maxYear = Math.max(...years);
+  if (minYear === maxYear) return `${minYear}`;
+  // Se marcar 2 anos: "2021 vs 2022"
+  // Se marcar a partir de 3 anos: "2021 a 2026"
+  return years.length >= 3 ? `${minYear} a ${maxYear}` : `${minYear} vs ${maxYear}`;
+};
+
 const getComparisonBadge = (valBase, valTarget, isInverse = false) => {
   const numBase = Number(valBase || 0);
   const numTarget = Number(valTarget || 0);
@@ -198,7 +209,7 @@ const MultiYearTooltip = ({ active, payload, label, selectedYears, isInverse = f
             fontWeight: '800',
             color: isGood ? '#10b981' : '#ef4444'
           }}>
-            <span>Variação ({baseYear} vs {targetYear}):</span>
+            <span>Variação ({formatYearRange(selectedYears)}):</span>
             <span>
               {diff > 0 ? `+${diff.toLocaleString('pt-BR')}` : diff.toLocaleString('pt-BR')} ({pct > 0 ? '+' : ''}{pct.toFixed(1)}%)
             </span>
@@ -398,11 +409,8 @@ const MultiYearFilterBar = ({
 
   const getPeriodLabel = () => {
     if (isAll) return 'Todos os Anos (2021 a 2026)';
-    if (isLast2) return '2025 vs 2026';
-    if (isLast3) return '2024 a 2026';
-    if (is2021vs2026) return '2021 vs 2026';
     if (selectedYears.length === 1) return `Ano ${selectedYears[0]}`;
-    return `${selectedYears.join(', ')}`;
+    return formatYearRange(selectedYears);
   };
 
   return (
@@ -587,7 +595,7 @@ const OfficialTable = ({
               );
             })}
             <th style={{ padding: '10px 14px', minWidth: '160px' }}>
-              COMPARATIVO % {years.length > 1 && `(${baseYear} vs ${targetYear})`}
+              COMPARATIVO % {years.length > 1 && `(${formatYearRange(years)})`}
             </th>
           </tr>
         </thead>
@@ -824,13 +832,13 @@ const Dashboard = () => {
   const statsBaseYear = selectedStatsYears.length > 1 
     ? Math.min(...selectedStatsYears) 
     : (selectedStatsYears[0] > 2021 ? selectedStatsYears[0] - 1 : selectedStatsYears[0] || 2025);
-  const statsRangeLabel = statsBaseYear === statsTargetYear ? `${statsTargetYear}` : `${statsBaseYear} vs ${statsTargetYear}`;
+  const statsRangeLabel = formatYearRange(selectedStatsYears);
 
   const prodTargetYear = selectedProdYears.length > 0 ? Math.max(...selectedProdYears) : 2026;
   const prodBaseYear = selectedProdYears.length > 1 
     ? Math.min(...selectedProdYears) 
     : (selectedProdYears[0] > 2021 ? selectedProdYears[0] - 1 : selectedProdYears[0] || 2025);
-  const prodRangeLabel = prodBaseYear === prodTargetYear ? `${prodTargetYear}` : `${prodBaseYear} vs ${prodTargetYear}`;
+  const prodRangeLabel = formatYearRange(selectedProdYears);
 
   const statsIcons = {
     "HOMICÍDIO DOLOSO": Skull, "LATROCÍNIO": HandCoins, "ROUBO DE VEÍCULOS": Car,
