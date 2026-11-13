@@ -149,8 +149,8 @@ const getComparisonBadge = (valBase, valTarget, isInverse = false) => {
 
 const MultiYearTooltip = ({ active, payload, label, selectedYears, isInverse = false }) => {
   if (active && payload && payload.length) {
-    const targetYear = selectedYears[selectedYears.length - 1];
-    const baseYear = selectedYears.length > 1 ? selectedYears[selectedYears.length - 2] : null;
+    const targetYear = selectedYears.length > 0 ? Math.max(...selectedYears) : 2026;
+    const baseYear = selectedYears.length > 1 ? Math.min(...selectedYears) : null;
 
     const baseItem = baseYear ? payload.find(p => p.dataKey === `Ano ${baseYear}`) : null;
     const targetItem = targetYear ? payload.find(p => p.dataKey === `Ano ${targetYear}`) : null;
@@ -549,8 +549,8 @@ const OfficialTable = ({
   activeColor = '#3b82f6',
   totalLabel = "TOTAL GERAL"
 }) => {
-  const targetYear = years[years.length - 1];
-  const baseYear = years.length > 1 ? years[years.length - 2] : (years[0] > 2021 ? years[0] - 1 : years[0]);
+  const targetYear = years.length > 0 ? Math.max(...years) : 2026;
+  const baseYear = years.length > 1 ? Math.min(...years) : (years[0] > 2021 ? years[0] - 1 : years[0] || 2025);
 
   // Totais por ano
   const totalsByYear = {};
@@ -820,11 +820,17 @@ const Dashboard = () => {
     return row;
   });
 
-  const statsTargetYear = selectedStatsYears[selectedStatsYears.length - 1];
-  const statsBaseYear = selectedStatsYears.length > 1 ? selectedStatsYears[selectedStatsYears.length - 2] : (selectedStatsYears[0] > 2021 ? selectedStatsYears[0] - 1 : selectedStatsYears[0]);
+  const statsTargetYear = selectedStatsYears.length > 0 ? Math.max(...selectedStatsYears) : 2026;
+  const statsBaseYear = selectedStatsYears.length > 1 
+    ? Math.min(...selectedStatsYears) 
+    : (selectedStatsYears[0] > 2021 ? selectedStatsYears[0] - 1 : selectedStatsYears[0] || 2025);
+  const statsRangeLabel = statsBaseYear === statsTargetYear ? `${statsTargetYear}` : `${statsBaseYear} vs ${statsTargetYear}`;
 
-  const prodTargetYear = selectedProdYears[selectedProdYears.length - 1];
-  const prodBaseYear = selectedProdYears.length > 1 ? selectedProdYears[selectedProdYears.length - 2] : (selectedProdYears[0] > 2021 ? selectedProdYears[0] - 1 : selectedProdYears[0]);
+  const prodTargetYear = selectedProdYears.length > 0 ? Math.max(...selectedProdYears) : 2026;
+  const prodBaseYear = selectedProdYears.length > 1 
+    ? Math.min(...selectedProdYears) 
+    : (selectedProdYears[0] > 2021 ? selectedProdYears[0] - 1 : selectedProdYears[0] || 2025);
+  const prodRangeLabel = prodBaseYear === prodTargetYear ? `${prodTargetYear}` : `${prodBaseYear} vs ${prodTargetYear}`;
 
   const statsIcons = {
     "HOMICÍDIO DOLOSO": Skull, "LATROCÍNIO": HandCoins, "ROUBO DE VEÍCULOS": Car,
@@ -905,7 +911,7 @@ const Dashboard = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <AlertTriangle size={20} color="#ef4444" />
               <h3 style={{ fontSize: '1.15rem', fontWeight: '800', margin: 0 }}>
-                Índices Criminais - {statsViewMode === 'tabela' ? 'Tabela Oficial' : 'Gráfico Comparativo'} ({statsBaseYear} vs {statsTargetYear})
+                Índices Criminais - {statsViewMode === 'tabela' ? 'Tabela Oficial' : 'Gráfico Comparativo'} ({statsRangeLabel})
               </h3>
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '4px 0 0 0' }}>
@@ -1050,7 +1056,7 @@ const Dashboard = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <ShieldCheck size={20} color="#10b981" />
               <h3 style={{ fontSize: '1.15rem', fontWeight: '800', margin: 0 }}>
-                Produtividade Policial - {prodViewMode === 'tabela' ? 'Tabela Oficial' : 'Gráfico Comparativo'} ({prodBaseYear} vs {prodTargetYear})
+                Produtividade Policial - {prodViewMode === 'tabela' ? 'Tabela Oficial' : 'Gráfico Comparativo'} ({prodRangeLabel})
               </h3>
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '4px 0 0 0' }}>
