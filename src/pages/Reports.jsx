@@ -186,7 +186,7 @@ const Reports = () => {
   // Exportar dados como CSV
   const handleExportCsv = () => {
     let csv = `RELATORIO: ${reportTitle}\nPERIODO: ${getPeriodLabel()} - ${rangeLabel}\n\n`;
-    
+
     if (includeCrimes) {
       csv += `--- INDICES CRIMINAIS ---\nNATUREZA;${selectedYears.join(';')};COMPARATIVO\n`;
       selectedCrimes.forEach(item => {
@@ -245,7 +245,7 @@ const Reports = () => {
 
   return (
     <div className="reports-page animate-fade-in" style={{ paddingBottom: '4rem' }}>
-      
+
       {/* BARRA DE FERRAMENTAS SUPERIOR (NÃO APARECE NA IMPRESSÃO) */}
       <div className="no-print" style={{ marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -326,7 +326,7 @@ const Reports = () => {
         {showFilters && (
           <div className="glass-panel" style={{ padding: '1.2rem', marginTop: '1.2rem', borderRadius: '14px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.2rem' }}>
-              
+
               {/* Coluna 1: Anos e Meses */}
               <div>
                 <h4 style={{ fontSize: '0.8rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--primary-color)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -374,8 +374,8 @@ const Reports = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                     <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '700' }}>Meses Selecionados:</span>
                     <div style={{ display: 'flex', gap: '4px' }}>
-                      <button onClick={() => setSelectedMonths([0,1,2,3,4,5,6,7,8])} style={{ fontSize: '0.62rem', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--surface-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Jan a Set</button>
-                      <button onClick={() => setSelectedMonths([0,1,2,3,4,5,6,7,8,9,10,11])} style={{ fontSize: '0.62rem', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--surface-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Todos</button>
+                      <button onClick={() => setSelectedMonths([0, 1, 2, 3, 4, 5, 6, 7, 8])} style={{ fontSize: '0.62rem', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--surface-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Jan a Set</button>
+                      <button onClick={() => setSelectedMonths([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])} style={{ fontSize: '0.62rem', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--surface-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Todos</button>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
@@ -517,10 +517,10 @@ const Reports = () => {
             />
             <div>
               <h2 style={{ fontSize: '0.95rem', fontWeight: '900', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#0f172a' }}>
-                GOVERNO DO ESTADO DO AMAZONAS
+                POLÍCIA MILITAR DO ESTADO DO AMAZONAS
               </h2>
               <h3 style={{ fontSize: '0.85rem', fontWeight: '800', margin: '2px 0', textTransform: 'uppercase', color: '#1e3a8a' }}>
-                SECRETARIA DE SEGURANÇA PÚBLICA • POLÍCIA MILITAR DO AMAZONAS
+                BATALHÃO LESTE - CONQUISTAR E MANTER!
               </h3>
               <p style={{ fontSize: '0.75rem', fontWeight: '700', margin: 0, color: '#475569', textTransform: 'uppercase' }}>
                 {reportSubtitle}
